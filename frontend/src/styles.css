@@ -152,6 +152,38 @@ small {
   color: #067647;
 }
 
+.input-readiness {
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.input-readiness span,
+.status-badge {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.input-readiness h3 {
+  margin: 8px 0;
+}
+
+.input-readiness p {
+  margin: 0;
+}
+
+.readiness-ready {
+  border: 1px solid #abefc6;
+  background: #f6fef9;
+  color: #067647;
+}
+
+.readiness-draft,
+.warning-card {
+  border-color: #fedf89;
+  background: #fffcf5;
+  color: #93370d;
+}
+
 .card-list {
   display: grid;
   gap: 16px;
@@ -209,9 +241,41 @@ small {
   color: #b42318;
 }
 
+.status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.warning-badge {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.blocking-reason {
+  border-left: 3px solid #f79009;
+  padding-left: 12px;
+  color: #93370d;
+  font-weight: 600;
+}
+
 .card span {
   color: #667085;
   font-size: 14px;
+}
+
+.card .warning-badge {
+  color: #b54708;
 }
 
 .card h3 {
@@ -283,6 +347,12 @@ progress {
 }
 
 .history-empty {
+  margin-top: 24px;
+}
+
+.brief-needed-card {
+  display: grid;
+  gap: 10px;
   margin-top: 24px;
 }
 

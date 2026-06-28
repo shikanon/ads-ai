@@ -94,9 +94,15 @@ export function HistoryPage() {
           {projects.map((project) => (
             <article className="card history-card" key={project.id}>
               <div>
-                <span>{projectStatusLabels[project.status]}</span>
+                <div className="status-badges">
+                  <span className="status-badge">{projectStatusLabels[project.status]}</span>
+                  {project.needs_brief_input && <span className="status-badge warning-badge">待补充 brief</span>}
+                </div>
                 <h3>{project.name}</h3>
                 <p>{project.summary}</p>
+                {project.needs_brief_input && (
+                  <p className="blocking-reason">请先补充 brief 文件、URL/TOS、参考素材或需求文本后再解析。</p>
+                )}
                 <p className="meta-line">
                   创建：{formatDate(project.created_at)} · 更新：{formatDate(project.updated_at)}
                 </p>
@@ -105,8 +111,8 @@ export function HistoryPage() {
                 </p>
               </div>
               <div className="history-actions">
-                <Link className="primary-action compact-action" to={resumePath(project)}>
-                  继续查看
+                <Link className="primary-action compact-action" to={project.needs_brief_input ? `/projects/${project.id}/brief` : resumePath(project)}>
+                  {project.needs_brief_input ? '补充 brief' : '继续查看'}
                 </Link>
                 <button
                   className="secondary-action compact-action danger-action"

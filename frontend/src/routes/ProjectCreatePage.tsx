@@ -11,6 +11,7 @@ export function ProjectCreatePage() {
   const [requirementText, setRequirementText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const hasRequirementText = Boolean(requirementText.trim());
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,10 +72,19 @@ export function ProjectCreatePage() {
             onChange={(event) => setRequirementText(event.target.value)}
           />
         </label>
+        <div className={`input-readiness full-width ${hasRequirementText ? 'readiness-ready' : 'readiness-draft'}`}>
+          <span>需求输入完整度</span>
+          <h3>{hasRequirementText ? '已具备文本需求输入' : '将创建为待补充 brief 草稿'}</h3>
+          <p>
+            {hasRequirementText
+              ? '当前需求摘要会作为初始需求文本保存，进入 Brief 输入页后可继续补充 brief 文件、URL/TOS 或参考素材。'
+              : '需求摘要为空时仍可先创建项目，但创建后会成为“待补充 brief 草稿”。下一步需要在 Brief 输入页上传 brief 文件、填写 URL/TOS、提供参考素材或输入需求文本后才能解析。'}
+          </p>
+        </div>
         {errorMessage && <p className="error-message full-width">{errorMessage}</p>}
         <div className="form-actions full-width">
           <button className="primary-action" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '创建中...' : '创建并进入 brief 输入'}
+            {isSubmitting ? '创建中...' : hasRequirementText ? '创建并进入 brief 输入' : '创建草稿并补充 brief'}
           </button>
           <Link className="secondary-action" to="/history">
             查看历史记录
