@@ -147,6 +147,50 @@ def test_api_flow_parse_confirm_generate_retry_and_compose(api_client):
     assert all(item["id"] != project_id for item in api_client.get("/api/projects").json()["projects"])
 
 
+def test_empty_draft_requires_brief_input_before_parse(api_client):
+    created = api_client.post("/api/projects", json={"name": "待补充 brief 草稿", "target_duration_seconds": 30})
+
+    assert created.status_code == 200
+    project_id = created.json()["project"]["id"]
+    assert created.json()["needs_brief_input"] is True
+
+    history = api_client.get("/api/projects")
+    assert history.status_code == 200
+    history_item = next(item for item in history.json()["projects"] if item["id"] == project_id)
+    assert history_item["needs_brief_input"] is True
+
+    detail = api_client.get(f"/api/projects/{project_id}")
+    assert detail.status_code == 200
+    assert detail.json()["needs_brief_input"] is True
+    assert detail.json()["history_summary"]["needs_brief_input"] is True
+
+    blocked = api_client.post(f"/api/projects/{project_id}/parse-brief")
+    assert blocked.status_code == 400
+    assert blocked.json()["error"]["code"] == "BRIEF_INPUT_REQUIRED"
+    assert blocked.json()["error"]["message"] == "请至少上传 brief、输入需求文本或提供参考素材。"
+
+    still_empty = api_client.get(f"/api/projects/{project_id}")
+    assert still_empty.status_code == 200
+    assert still_empty.json()["parse_result"] is None
+
+    brief_input = api_client.post(
+        f"/api/projects/{project_id}/brief-input",
+        data={"requirement_text": "  面向新用户突出首单转化  "},
+    )
+    assert brief_input.status_code == 200
+    assert brief_input.json()["project"]["requirement_text"] == "面向新用户突出首单转化"
+
+    ready = api_client.get(f"/api/projects/{project_id}")
+    assert ready.status_code == 200
+    assert ready.json()["needs_brief_input"] is False
+    assert ready.json()["history_summary"]["needs_brief_input"] is False
+
+    parsed = api_client.post(f"/api/projects/{project_id}/parse-brief")
+    assert parsed.status_code == 200
+    assert parsed.json()["needs_brief_input"] is False
+    assert parsed.json()["parse_result"]["summary"]
+
+
 def test_submit_brief_input_extracts_pdf_text_and_pdf_page_metadata(api_client, monkeypatch):
     created = api_client.post("/api/projects", json={"name": "红果短剧 TVC", "target_duration_seconds": 30})
     assert created.status_code == 200
