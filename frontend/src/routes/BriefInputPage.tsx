@@ -1,8 +1,13 @@
-import { FormEvent, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { InvalidProjectRoute, resolveRequiredProjectId } from './projectRoute';
 
 type ReferenceAssetType = 'video' | 'image' | 'audio';
+
+interface NavigateState {
+  createdDraft?: boolean;
+  projectName?: string;
+}
 
 interface UploadResponse {
   project: { id: string; name: string };
@@ -31,7 +36,10 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:9898';
 
 export function BriefInputPage() {
   const { projectId } = useParams();
+  const location = useLocation();
   const apiProjectId = useMemo(() => resolveRequiredProjectId(projectId), [projectId]);
+  const navState = (location.state as NavigateState | null) ?? null;
+  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
   const [briefFile, setBriefFile] = useState<File | null>(null);
   const [briefRemoteSource, setBriefRemoteSource] = useState('');
   const [referenceVideos, setReferenceVideos] = useState<File[]>([]);
@@ -43,6 +51,15 @@ export function BriefInputPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<UploadResponse | null>(null);
+
+  useEffect(() => {
+    if (navState?.createdDraft) {
+      const name = navState.projectName ? `「${navState.projectName}」` : '草稿项目';
+      setWelcomeMessage(`${name}已创建。请至少提供一种 brief 输入：上传 PDF/PPT 文件、填写远程 brief 地址、输入需求文本，或提供参考素材。`);
+    } else if (navState?.projectName) {
+      setWelcomeMessage(`项目「${navState.projectName}」已创建，可继续补充 brief 和参考素材。`);
+    }
+  }, [navState?.createdDraft, navState?.projectName]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,6 +128,12 @@ export function BriefInputPage() {
       <p className="eyebrow">Step 2</p>
       <h2>输入 brief 与参考素材</h2>
       <p>支持 PDF/PPT brief、参考视频、参考图片、参考音频和自由文本需求。</p>
+      {welcomeMessage && (
+        <div className="welcome-banner">
+          <strong>项目已创建</strong>
+          <p>{welcomeMessage}</p>
+        </div>
+      )}
       <form className="form-grid" onSubmit={(event) => void handleSubmit(event)}>
         <label className="full-width">
           Brief 文件

@@ -94,9 +94,12 @@ export function HistoryPage() {
           {projects.map((project) => (
             <article className="card history-card" key={project.id}>
               <div>
-                <span>{projectStatusLabels[project.status]}</span>
+                <span>
+                  {projectStatusLabels[project.status]}
+                  {project.status === 'draft' ? ' · 待补充 brief' : ''}
+                </span>
                 <h3>{project.name}</h3>
-                <p>{project.summary}</p>
+                <p>{project.summary || (project.status === 'draft' ? '草稿项目，请补充 brief 或参考素材后继续。' : '')}</p>
                 <p className="meta-line">
                   创建：{formatDate(project.created_at)} · 更新：{formatDate(project.updated_at)}
                 </p>
