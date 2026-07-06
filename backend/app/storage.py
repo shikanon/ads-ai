@@ -464,8 +464,10 @@ class JsonRepository:
 
     def _project_payload_from_state(self, state: dict[str, dict[str, Any]], project_id: UUID) -> dict[str, Any]:
         project_key = str(project_id)
+        needs_brief_input = self._needs_brief_input_from_state(state, project_key)
         return {
             "project": state["projects"].get(project_key),
+            "needs_brief_input": needs_brief_input,
             "files": [item for item in state["files"].values() if item["project_id"] == project_key],
             "requirements": [item for item in state["requirements"].values() if item["project_id"] == project_key],
             "references": [item for item in state["references"].values() if item["project_id"] == project_key],
@@ -500,7 +502,23 @@ class JsonRepository:
             "segment_count": segment_count,
             "final_result_status": final_result.get("status") if final_result else CompositionStatus.NOT_STARTED.value,
             "summary": parse_result.get("summary") or project.requirement_text or "尚未生成解析摘要",
+            "needs_brief_input": self._needs_brief_input_from_state(state, project_key),
         }
+
+    @staticmethod
+    def _needs_brief_input_from_state(state: dict[str, dict[str, Any]], project_key: str) -> bool:
+        project_payload = state["projects"].get(project_key)
+        if not project_payload:
+            return False
+
+        requirement_text = project_payload.get("requirement_text")
+        has_requirement_text = isinstance(requirement_text, str) and bool(requirement_text.strip())
+        has_files = any(item.get("project_id") == project_key for item in state["files"].values())
+        has_reference_assets = any(
+            item.get("project_id") == project_key and not item.get("is_missing")
+            for item in state["references"].values()
+        )
+        return not has_requirement_text and not has_files and not has_reference_assets
 
     def _read_state(self) -> dict[str, dict[str, Any]]:
         self.root.mkdir(parents=True, exist_ok=True)

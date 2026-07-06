@@ -20,6 +20,7 @@ export interface ProjectHistorySummary {
   segment_count: number;
   final_result_status: FinalResult['status'];
   summary: string;
+  needs_brief_input?: boolean;
 }
 
 export interface GalleryItem extends ProjectHistorySummary {
@@ -48,6 +49,7 @@ export interface ReferenceAsset {
 
 export interface ParsedBriefPayload {
   project: ProjectDraft | null;
+  needs_brief_input?: boolean;
   requirements: RequirementItem[];
   references: ReferenceAsset[];
   segment_plans: SegmentPlan[];

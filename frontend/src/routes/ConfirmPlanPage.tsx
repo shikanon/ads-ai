@@ -43,6 +43,7 @@ export function ConfirmPlanPage() {
   const [requirements, setRequirements] = useState<RequirementItem[]>([]);
   const [references, setReferences] = useState<ReferenceAsset[]>([]);
   const [segments, setSegments] = useState<SegmentPlan[]>([]);
+  const [needsBriefInput, setNeedsBriefInput] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isParsing, setIsParsing] = useState(false);
   const [isPlanning, setIsPlanning] = useState(false);
@@ -76,8 +77,11 @@ export function ConfirmPlanPage() {
         setErrorMessage('请先创建项目并提交 brief 输入，再执行解析。');
         return;
       }
+      if (payload.needs_brief_input) {
+        return;
+      }
       if (!payload.parse_result) {
-        await handleParse();
+        await handleParse({ skipNeedsCheck: true });
       } else if ((payload.segment_plans ?? []).length === 0) {
         await handleGeneratePlan();
       }
@@ -88,9 +92,13 @@ export function ConfirmPlanPage() {
     }
   }
 
-  async function handleParse() {
+  async function handleParse(options: { skipNeedsCheck?: boolean } = {}) {
     if (!apiProjectId) {
       setErrorMessage('请从具体项目进入确认方案。');
+      return;
+    }
+    if (needsBriefInput && !options.skipNeedsCheck) {
+      setErrorMessage('请先补充 brief 文件、URL/TOS、参考素材或需求文本后再解析。');
       return;
     }
     setIsParsing(true);
@@ -245,6 +253,7 @@ export function ConfirmPlanPage() {
     setRequirements(payload.requirements ?? []);
     setReferences(payload.references ?? []);
     setSegments(payload.segment_plans ?? []);
+    setNeedsBriefInput(payload.needs_brief_input === true);
   }
 
   function updateRequirement(id: string, patch: Partial<RequirementItem>) {
@@ -331,10 +340,10 @@ export function ConfirmPlanPage() {
       <h2>查看和编辑解析结果</h2>
       <p>Seed 2.1 会将 brief、需求文本和文件引用解析为结构化需求、参考素材和待补充素材。</p>
       <div className="form-actions">
-        <button className="primary-action" type="button" onClick={() => void handleParse()} disabled={isParsing || isLoading}>
+        <button className="primary-action" type="button" onClick={() => void handleParse()} disabled={isParsing || isLoading || needsBriefInput}>
           {isParsing ? '解析中...' : '重新解析 brief'}
         </button>
-        <button className="secondary-action" type="button" onClick={() => void handleSave()} disabled={isSaving || requirements.length === 0}>
+        <button className="secondary-action" type="button" onClick={() => void handleSave()} disabled={isSaving || requirements.length === 0 || needsBriefInput}>
           {isSaving ? '保存中...' : '保存修改'}
         </button>
       </div>
@@ -342,6 +351,15 @@ export function ConfirmPlanPage() {
       {message && <p className="success-message">{message}</p>}
       {isLoading ? (
         <p>正在读取解析结果...</p>
+      ) : needsBriefInput ? (
+        <div className="card warning-card brief-needed-card">
+          <span>待补充 brief</span>
+          <h3>当前项目还没有可解析的 brief 输入</h3>
+          <p>请先补充 brief 文件、URL/TOS、参考素材或需求文本后再解析。</p>
+          <Link className="primary-action compact-action" to={`/projects/${apiProjectId}/brief`}>
+            返回 Brief 输入页
+          </Link>
+        </div>
       ) : (
         <>
           <div className="card status-card">

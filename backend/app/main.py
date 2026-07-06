@@ -417,7 +417,7 @@ def create_project(payload: ProjectCreateRequest) -> dict[str, object]:
         requirement_text=payload.requirement_text,
         target_duration_seconds=payload.target_duration_seconds,
     )
-    return {"project": project.model_dump(mode="json")}
+    return repository.project_payload(project.id)
 
 
 @app.get("/api/projects/{project_id}", tags=["projects"])
@@ -445,6 +445,12 @@ def parse_brief(project_id: UUID) -> dict[str, object]:
     payload = repository.project_payload(project_id)
     if not payload.get("project"):
         raise AppError("PROJECT_NOT_FOUND", "项目不存在", status.HTTP_404_NOT_FOUND)
+    if payload.get("needs_brief_input"):
+        raise AppError(
+            "BRIEF_INPUT_REQUIRED",
+            "请至少上传 brief、输入需求文本或提供参考素材。",
+            status.HTTP_400_BAD_REQUEST,
+        )
     parsed = brief_parser.parse(
         project=repository.ensure_project(project_id=project_id),
         files=[FileRecord.model_validate(item) for item in payload["files"]],
