@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmPlanPage } from './ConfirmPlanPage';
 
@@ -41,14 +41,14 @@ const draftPayload = {
 };
 
 function renderPage() {
-  return render(
-    <MemoryRouter initialEntries={[`/projects/${projectId}/confirm`]}>
-      <Routes>
-        <Route path="/projects/:projectId/confirm" element={<ConfirmPlanPage />} />
-        <Route path="/projects/:projectId/progress" element={<p>生成进度页</p>} />
-      </Routes>
-    </MemoryRouter>,
+  const router = createMemoryRouter(
+    [
+      { path: '/projects/:projectId/confirm', element: <ConfirmPlanPage /> },
+      { path: '/projects/:projectId/progress', element: <p>生成进度页</p> },
+    ],
+    { initialEntries: [`/projects/${projectId}/confirm`] },
   );
+  return render(<RouterProvider router={router} />);
 }
 
 describe('ConfirmPlanPage', () => {
