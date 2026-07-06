@@ -11,6 +11,7 @@ function renderPage() {
     <MemoryRouter initialEntries={[`/projects/${projectId}/brief`]}>
       <Routes>
         <Route path="/projects/:projectId/brief" element={<BriefInputPage />} />
+        <Route path="/projects/:projectId/confirm" element={<div data-testid="confirm-page">确认方案</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -31,7 +32,7 @@ describe('BriefInputPage', () => {
     expect(screen.getByText('请至少上传 brief、输入需求文本或提供参考素材。')).toBeInTheDocument();
   });
 
-  it('提交需求文本并展示保存结果', async () => {
+  it('提交需求文本后展示下一步引导主按钮', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -74,6 +75,10 @@ describe('BriefInputPage', () => {
     expect(screen.getByText(/红果短剧优质达人合作brief-B站/)).toBeInTheDocument();
     expect(screen.getByText(/共 3 页，已渲染 2 页，已按配置截断/)).toBeInTheDocument();
     expect(screen.getByText(/将随 Seed 2.1 请求用于视觉理解/)).toBeInTheDocument();
+    expect(screen.getByText(/下一步：系统将解析 Brief/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '开始解析并生成方案 →' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '继续补充素材' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '保存并上传 Files API' })).not.toBeInTheDocument();
   });
 
   it('PDF 文本被拒绝时不展示乱码摘要并保留视觉解析提示', async () => {
@@ -112,5 +117,64 @@ describe('BriefInputPage', () => {
     expect(screen.getByText(/fragmented single-character lines/)).toBeInTheDocument();
     expect(screen.getByText(/共 1 页，已渲染 1 页，未截断/)).toBeInTheDocument();
     expect(screen.getByText(/将随 Seed 2.1 请求用于视觉理解/)).toBeInTheDocument();
+  });
+
+  it('支持批量添加多个远程参考素材并提交', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        project: { id: projectId, name: '新品 TVC' },
+        files: [],
+        references: [
+          { id: 'ref-1', asset_type: 'video' },
+          { id: 'ref-2', asset_type: 'image' },
+        ],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderPage();
+
+    const urlInputs = screen.getAllByPlaceholderText(/https:\/\/example\.com\/ref\.mp4/);
+    const remoteUrlInput = urlInputs[urlInputs.length - 1];
+    const typeSelect = screen.getAllByRole('combobox')[0];
+
+    await user.selectOptions(typeSelect, 'video');
+    await user.type(remoteUrlInput, 'https://example.com/ref1.mp4');
+    await user.click(screen.getByRole('button', { name: '添加' }));
+
+    expect(screen.getByText('https://example.com/ref1.mp4')).toBeInTheDocument();
+
+    await user.selectOptions(typeSelect, 'image');
+    await user.type(remoteUrlInput, 'https://example.com/ref2.jpg');
+    await user.type(screen.getByPlaceholderText('用途说明（可选）'), '竞品参考');
+    await user.click(screen.getByRole('button', { name: '添加' }));
+
+    expect(screen.getByText('https://example.com/ref2.jpg')).toBeInTheDocument();
+    expect(screen.getByText('竞品参考')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '保存并上传 Files API' }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const callArgs = fetchMock.mock.calls[0];
+    const body = callArgs[1].body as FormData;
+    const remoteRefsJson = body.get('remote_references_json') as string;
+    const refs = JSON.parse(remoteRefsJson);
+    expect(refs).toHaveLength(2);
+    expect(refs[0]).toMatchObject({ url: 'https://example.com/ref1.mp4', asset_type: 'video' });
+    expect(refs[1]).toMatchObject({ url: 'https://example.com/ref2.jpg', asset_type: 'image', purpose: '竞品参考' });
+  });
+
+  it('远程参考素材输入框有未添加内容时阻止提交', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const urlInputs = screen.getAllByPlaceholderText(/https:\/\/example\.com\/ref\.mp4/);
+    const remoteUrlInput = urlInputs[urlInputs.length - 1];
+    await user.type(remoteUrlInput, 'https://example.com/unfinished.mp4');
+    await user.type(screen.getByLabelText('需求文本'), '简单需求');
+    await user.click(screen.getByRole('button', { name: '保存并上传 Files API' }));
+
+    expect(screen.getByText('请先点击「添加」将未添加的远程素材加入列表，或清空输入框后再提交。')).toBeInTheDocument();
   });
 });
