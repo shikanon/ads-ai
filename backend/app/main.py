@@ -16,6 +16,21 @@ from app.config import get_settings
 from app.errors import AppError, register_error_handlers
 from app.file_validation import ValidatedUpload, validate_brief_upload, validate_reference_upload, validate_remote_source
 from app.logging_config import configure_logging
+from app.material_embedding import MaterialEmbeddingService
+from app.material_ingestion import MaterialIngestionService
+from app.material_insights import MaterialInsightsService, effect_payload
+from app.material_models import (
+    MaterialAssetType,
+    MaterialComplianceStatus,
+    MaterialCopyrightStatus,
+    MaterialLibraryType,
+    MaterialSearchQuery,
+    MaterialTagCategory,
+    MaterialVisibility,
+)
+from app.material_search import MaterialSearchService
+from app.material_storage import MaterialStorage
+from app.material_tagging import MaterialTagSuggestion, MaterialTaggingService
 from app.models import (
     FilePurpose,
     FileRecord,
@@ -35,6 +50,7 @@ from app.seedance import SeedanceClient
 from app.storage import JsonRepository
 from app.tvc_planner import SegmentPlanner
 from app.video_composer import VideoComposer
+from app.vikingdb_client import VikingDBClient
 from app.volcengine_files import VolcengineFilesClient
 
 
@@ -76,6 +92,69 @@ class RemoteReferenceInput(BaseModel):
     asset_type: ReferenceAssetType
     purpose: str = "参考素材"
     usage_notes: str | None = None
+
+
+class MaterialImportRequest(BaseModel):
+    uris: list[str] = Field(min_length=1)
+    library_type: MaterialLibraryType = MaterialLibraryType.RAW
+    source_metadata: dict[str, object] = Field(default_factory=dict)
+    copyright_status: MaterialCopyrightStatus = MaterialCopyrightStatus.CLEARED
+    compliance_status: MaterialComplianceStatus = MaterialComplianceStatus.PENDING
+    visibility: MaterialVisibility = MaterialVisibility.PRIVATE
+    owner_id: str | None = None
+    brand_id: str | None = None
+    actor: str | None = None
+
+
+class MaterialCreateRequest(BaseModel):
+    source_uri: str = Field(min_length=1)
+    asset_type: MaterialAssetType | None = None
+    library_type: MaterialLibraryType = MaterialLibraryType.RAW
+    title: str | None = None
+    description: str | None = None
+    source_system: str | None = None
+    source_metadata: dict[str, object] = Field(default_factory=dict)
+    business_tags: list[str] = Field(default_factory=list)
+    copyright_status: MaterialCopyrightStatus = MaterialCopyrightStatus.CLEARED
+    compliance_status: MaterialComplianceStatus = MaterialComplianceStatus.PENDING
+    visibility: MaterialVisibility = MaterialVisibility.PRIVATE
+    owner_id: str | None = None
+    brand_id: str | None = None
+    actor: str | None = None
+
+
+class MaterialTagRequest(BaseModel):
+    actor: str | None = None
+
+
+class MaterialIndexRequest(BaseModel):
+    actor: str | None = None
+
+
+class MaterialRagRequest(MaterialSearchQuery):
+    enable_rag: bool = True
+
+
+class MaterialEffectsRequest(BaseModel):
+    material_id: UUID
+    impressions: float | None = Field(default=None, ge=0)
+    clicks: float | None = Field(default=None, ge=0)
+    conversions: float | None = Field(default=None, ge=0)
+    ctr: float | None = Field(default=None, ge=0)
+    cvr: float | None = Field(default=None, ge=0)
+    actor: str | None = None
+
+
+class MaterialManualTagInput(BaseModel):
+    category: MaterialTagCategory
+    name: str = Field(min_length=1)
+    value: str | None = None
+    confidence: float = Field(default=1.0, ge=0, le=1)
+
+
+class MaterialManualTagsRequest(BaseModel):
+    tags: list[MaterialManualTagInput] = Field(min_length=1)
+    actor: str | None = None
 
 
 class ParsedRequirementInput(BaseModel):
@@ -132,6 +211,192 @@ def health_check() -> dict[str, str]:
 @app.get("/config", tags=["system"])
 def read_public_config() -> dict[str, object]:
     return settings.public_dict()
+
+
+@app.post("/api/materials/upload", tags=["materials"])
+async def upload_materials(
+    files: list[UploadFile] = File(...),
+    library_type: MaterialLibraryType = Form(default=MaterialLibraryType.RAW),
+    source_system: str | None = Form(default="upload"),
+    copyright_status: MaterialCopyrightStatus = Form(default=MaterialCopyrightStatus.CLEARED),
+    compliance_status: MaterialComplianceStatus = Form(default=MaterialComplianceStatus.PENDING),
+    visibility: MaterialVisibility = Form(default=MaterialVisibility.PRIVATE),
+    owner_id: str | None = Form(default=None),
+    brand_id: str | None = Form(default=None),
+    actor: str | None = Form(default=None),
+) -> dict[str, object]:
+    if not files:
+        raise AppError("MISSING_MATERIAL_FILES", "请至少上传一个素材文件", status.HTTP_400_BAD_REQUEST)
+    service = _material_ingestion_service()
+    materials = []
+    for file in files:
+        data = await file.read()
+        material = service.ingest_upload(
+            file,
+            data,
+            library_type=library_type,
+            source_system=source_system,
+            copyright_status=copyright_status,
+            compliance_status=compliance_status,
+            visibility=visibility,
+            owner_id=owner_id,
+            brand_id=brand_id,
+            actor=actor,
+        )
+        materials.append(material.model_dump(mode="json"))
+    return {"materials": materials}
+
+
+@app.post("/api/materials/import", tags=["materials"])
+def import_materials(payload: MaterialImportRequest) -> dict[str, object]:
+    service = _material_ingestion_service()
+    materials = [
+        service.import_tos_uri(
+            uri,
+            library_type=payload.library_type,
+            source_metadata=payload.source_metadata,
+            copyright_status=payload.copyright_status,
+            compliance_status=payload.compliance_status,
+            visibility=payload.visibility,
+            owner_id=payload.owner_id,
+            brand_id=payload.brand_id,
+            actor=payload.actor,
+        ).model_dump(mode="json")
+        for uri in payload.uris
+    ]
+    return {"materials": materials}
+
+
+@app.post("/api/materials", tags=["materials"])
+def create_material(payload: MaterialCreateRequest) -> dict[str, object]:
+    material = _material_ingestion_service().ingest_external(
+        source_uri=payload.source_uri,
+        asset_type=payload.asset_type,
+        library_type=payload.library_type,
+        title=payload.title,
+        description=payload.description,
+        source_system=payload.source_system,
+        source_metadata=payload.source_metadata,
+        business_tags=payload.business_tags,
+        copyright_status=payload.copyright_status,
+        compliance_status=payload.compliance_status,
+        visibility=payload.visibility,
+        owner_id=payload.owner_id,
+        brand_id=payload.brand_id,
+        actor=payload.actor,
+    )
+    return {"material": material.model_dump(mode="json")}
+
+
+@app.post("/api/materials/{material_id}/tag", tags=["materials"])
+def tag_material(material_id: UUID, payload: MaterialTagRequest | None = None) -> dict[str, object]:
+    try:
+        result = _material_tagging_service().tag_material(
+            material_id,
+            actor=payload.actor if payload else None,
+        )
+    except KeyError as exc:
+        raise AppError("MATERIAL_NOT_FOUND", "素材不存在", status.HTTP_404_NOT_FOUND) from exc
+    except ValueError as exc:
+        raise AppError("MATERIAL_TAGGING_FAILED", str(exc), status.HTTP_400_BAD_REQUEST) from exc
+    return {
+        "material": result.material.model_dump(mode="json"),
+        "tags": [tag.model_dump(mode="json") for tag in result.tags],
+        "model_name": result.model_name,
+        "fallback": result.fallback,
+    }
+
+
+@app.post("/api/materials/{material_id}/index", tags=["materials"])
+def index_material(material_id: UUID, payload: MaterialIndexRequest | None = None) -> dict[str, object]:
+    try:
+        result = _material_embedding_service().index_material(
+            material_id,
+            actor=payload.actor if payload else None,
+        )
+    except KeyError as exc:
+        raise AppError("MATERIAL_NOT_FOUND", "素材不存在", status.HTTP_404_NOT_FOUND) from exc
+    except ValueError as exc:
+        raise AppError("MATERIAL_INDEX_FAILED", str(exc), status.HTTP_400_BAD_REQUEST) from exc
+    return {
+        "material": result.material.model_dump(mode="json"),
+        "index": {
+            "index_id": result.index_id,
+            "partition_key": result.partition_key,
+            "vector_dim": result.vector_dim,
+            "embedding_model": result.embedding_model,
+            "embedding_version": result.embedding_version,
+        },
+        "fallback": result.fallback,
+        "vikingdb_response": result.vikingdb_response,
+    }
+
+
+@app.post("/api/materials/search", tags=["materials"])
+def search_materials(payload: MaterialSearchQuery) -> dict[str, object]:
+    result = _material_search_service().search(payload)
+    return {
+        "query": result.query.model_dump(mode="json"),
+        "results": [item.model_dump(mode="json") for item in result.results],
+        "answer": result.answer.model_dump(mode="json") if result.answer else None,
+    }
+
+
+@app.post("/api/materials/rag", tags=["materials"])
+def rag_materials(payload: MaterialRagRequest) -> dict[str, object]:
+    query = MaterialSearchQuery(**{**payload.model_dump(), "enable_rag": True})
+    result = _material_search_service().search(query)
+    return {
+        "query": result.query.model_dump(mode="json"),
+        "results": [item.model_dump(mode="json") for item in result.results],
+        "answer": result.answer.model_dump(mode="json") if result.answer else None,
+    }
+
+
+@app.post("/api/materials/effects", tags=["materials"])
+def update_material_effects(payload: MaterialEffectsRequest) -> dict[str, object]:
+    try:
+        result = _material_insights_service().record_effects(
+            payload.material_id,
+            impressions=payload.impressions,
+            clicks=payload.clicks,
+            conversions=payload.conversions,
+            ctr=payload.ctr,
+            cvr=payload.cvr,
+            actor=payload.actor,
+        )
+    except KeyError as exc:
+        raise AppError("MATERIAL_NOT_FOUND", "素材不存在", status.HTTP_404_NOT_FOUND) from exc
+    return effect_payload(result)
+
+
+@app.get("/api/materials/insights", tags=["materials"])
+def list_material_insights() -> dict[str, object]:
+    return {"insights": [insight.model_dump(mode="json") for insight in _material_insights_service().list_insights()]}
+
+
+@app.put("/api/materials/{material_id}/tags", tags=["materials"])
+def update_material_tags(material_id: UUID, payload: MaterialManualTagsRequest) -> dict[str, object]:
+    try:
+        result = _material_tagging_service().apply_human_tags(
+            material_id,
+            [
+                MaterialTagSuggestion(
+                    category=item.category,
+                    name=item.name,
+                    value=item.value,
+                    confidence=item.confidence,
+                )
+                for item in payload.tags
+            ],
+            actor=payload.actor,
+        )
+    except KeyError as exc:
+        raise AppError("MATERIAL_NOT_FOUND", "素材不存在", status.HTTP_404_NOT_FOUND) from exc
+    return {
+        "material": result.material.model_dump(mode="json"),
+        "tags": [tag.model_dump(mode="json") for tag in result.tags],
+    }
 
 
 @app.get("/api/projects", tags=["projects"])
@@ -594,6 +859,70 @@ def _save_remote_file(project_id: UUID, purpose: FilePurpose, source: str) -> Fi
         metadata={"ark_response": response},
     )
     return repository.save_file_record(record)
+
+
+def _material_ingestion_service() -> MaterialIngestionService:
+    return MaterialIngestionService(
+        MaterialStorage(repository),
+        settings.max_reference_file_size_mb * 1024 * 1024,
+    )
+
+
+def _material_tagging_service() -> MaterialTaggingService:
+    return MaterialTaggingService(
+        MaterialStorage(repository),
+        seed_client=SeedChatClient(
+            settings.ark_api_key,
+            settings.ark_chat_base_url,
+            settings.seed_tagging_model_name,
+            settings.seed_tagging_timeout_seconds,
+        ),
+        model_name=settings.seed_tagging_model_name,
+        low_confidence_threshold=settings.material_tagging_low_confidence_threshold,
+    )
+
+
+def _material_embedding_service() -> MaterialEmbeddingService:
+    return MaterialEmbeddingService(
+        MaterialStorage(repository),
+        vikingdb_client=VikingDBClient(
+            endpoint=settings.vikingdb_knowledge_base_endpoint,
+            collection=settings.vikingdb_knowledge_base_collection,
+            api_key=settings.vikingdb_api_key,
+            partition_field=settings.vikingdb_partition_field,
+            hybrid_index_mode=settings.vikingdb_hybrid_index_mode,
+        ),
+        embedding_model=settings.material_embedding_model_name,
+        embedding_model_version=settings.material_embedding_model_version,
+        vector_dim=settings.material_embedding_vector_dim,
+        partition_field=settings.vikingdb_partition_field,
+    )
+
+
+def _material_search_service() -> MaterialSearchService:
+    return MaterialSearchService(
+        MaterialStorage(repository),
+        vikingdb_client=VikingDBClient(
+            endpoint=settings.vikingdb_knowledge_base_endpoint,
+            collection=settings.vikingdb_knowledge_base_collection,
+            api_key=settings.vikingdb_api_key,
+            partition_field=settings.vikingdb_partition_field,
+            hybrid_index_mode=settings.vikingdb_hybrid_index_mode,
+        ),
+        seed_client=SeedChatClient(
+            settings.ark_api_key,
+            settings.ark_chat_base_url,
+            settings.seed_tagging_model_name,
+            settings.seed_tagging_timeout_seconds,
+        ),
+        embedding_model=settings.material_embedding_model_name,
+        embedding_model_version=settings.material_embedding_model_version,
+        vector_dim=settings.material_embedding_vector_dim,
+    )
+
+
+def _material_insights_service() -> MaterialInsightsService:
+    return MaterialInsightsService(MaterialStorage(repository))
 
 
 def _save_reference_asset(

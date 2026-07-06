@@ -25,6 +25,16 @@ from app.models import (
 )
 
 
+MATERIAL_COLLECTION_NAMES = (
+    "materials",
+    "material_tags",
+    "material_indexes",
+    "material_effects",
+    "material_insights",
+    "material_audit_events",
+)
+
+
 class JsonRepository:
     def __init__(self, storage_dir: str):
         self.root = Path(storage_dir)
@@ -509,6 +519,7 @@ class JsonRepository:
             "generation_plans": data.get("generation_plans", {}),
             "generation_tasks": data.get("generation_tasks", {}),
             "final_results": data.get("final_results", {}),
+            **{collection: data.get(collection, {}) for collection in MATERIAL_COLLECTION_NAMES},
         }
 
     def _write_state(self, state: dict[str, dict[str, Any]]) -> None:
@@ -536,6 +547,7 @@ class JsonRepository:
             "generation_plans": {},
             "generation_tasks": {},
             "final_results": {},
+            **{collection: {} for collection in MATERIAL_COLLECTION_NAMES},
         }
 
     def _build_next_generation_plan(

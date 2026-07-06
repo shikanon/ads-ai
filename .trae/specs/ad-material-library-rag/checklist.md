@@ -1,0 +1,20 @@
+- [x] 素材领域模型实现为 Pydantic 类型，并覆盖素材、标签、索引、检索、洞察、审计核心实体
+- [x] 本地 JSON 仓储支持素材、标签、索引、效果、洞察、审计 collection 的创建、读取和更新
+- [x] 素材上传接口支持有效文件入库，并能计算 MD5、提取基础元数据、记录审计事件
+- [x] TOS URI 批量导入和外部 API 接入可以创建 `received` 状态素材
+- [x] 重复文件入库会记录 duplicate relation，并避免重复索引工作
+- [x] AI 打标默认使用 `doubao-seed-2-1-pro-260628`，未配置外部服务时使用 deterministic fallback
+- [x] 人工校准标签可以持久化为 human source，并写入审计事件
+- [x] VikingDB 客户端以知识库版本边界实现，支持 upsert、search、hybrid search、delete 的 payload 构造和 fallback 测试
+- [x] `VIKINGDB_API_KEY` 只通过环境变量读取，公开配置、日志、README、测试输出不包含明文密钥
+- [x] 向量化与索引接口可以更新素材索引状态并记录 embedding model version
+- [x] 混合检索支持文本 query、标签/属性过滤、多路召回融合和 deterministic rerank
+- [x] RAG 接口可以基于 Top-N 素材生成带证据的回答，未配置模型时 fallback 稳定
+- [x] 效果回流接口可以更新曝光、点击、转化、CTR、CVR，并影响排序或洞察生成
+- [x] 经验洞察接口可以返回高效果成品素材沉淀的方法论、脚本模板和 Prompt
+- [x] blocked 或合规风险素材默认不会出现在普通检索结果中
+- [x] 前端新增素材库导航，并提供列表、上传、检索、详情、洞察页面
+- [x] 前端素材库页面具有清晰状态标识、筛选入口、结果卡片和 RAG 回答面板，视觉质量与现有站点一致
+- [x] 现有 TVC 项目、brief 解析、生成、历史、画廊、admin 路由测试继续通过
+- [x] 后端全量验证 `python3 -m pytest && python3 -m compileall app` 通过
+- [x] 前端全量验证 `npm run lint && npm run typecheck && npm run test && npm run build` 通过
