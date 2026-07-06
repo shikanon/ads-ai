@@ -81,6 +81,27 @@
   - [x] SubTask 9.5: 运行前端全量验证：`cd frontend && npm run lint && npm run typecheck && npm run test && npm run build`。
   - [x] SubTask 9.6: 如生成 `frontend/dist` 且未纳入版本管理，验证后清理构建产物。
 
+- [x] Task 10: 沉淀素材库核心产品方案到 README 和开发文档: 说明素材库是主产品表面，brief 解析、素材生成、成片回流都围绕素材库展开。
+  - [x] SubTask 10.1: 更新 `README.md`，加入素材库驱动工作流、信息架构、核心页面和本地验证入口。
+  - [x] SubTask 10.2: 新增或更新开发文档，说明素材库核心 UI、路由职责、后端边界、素材回流和验证命令。
+  - [x] SubTask 10.3: 确认文档中不包含真实 API Key，仅说明通过环境变量配置密钥。
+
+- [x] Task 11: 重构前端导航与入口为素材库核心工作台: 让用户从素材库开始完成入库、brief 解析、生成、检索和回流。
+  - [x] SubTask 11.1: 新增或改造素材工作台首页，展示素材驱动流程、处理队列、关键入口和下一步动作。
+  - [x] SubTask 11.2: 调整 `AppShell` 导航顺序和文案，突出素材工作台、素材库、Brief 解析、生成工坊、洞察回流和历史记录。
+  - [x] SubTask 11.3: 保留现有项目创建、brief、生成、预览、画廊、历史、admin 路由的可达性。
+
+- [x] Task 12: 改造 brief 与生成页面文案和布局: 表达 brief 解析与素材生成均基于素材库证据和素材上下文。
+  - [x] SubTask 12.1: 改造 brief 输入或确认页面，展示需求理解、素材匹配、缺失素材和生成准备度的说明或区域。
+  - [x] SubTask 12.2: 改造生成进度或成片预览页面，展示素材上下文、参考素材使用和生成结果回流素材库的提示。
+  - [x] SubTask 12.3: 统一相关页面的视觉层级、按钮文案和空状态，使其符合素材库核心心智。
+
+- [x] Task 13: 补充前端测试并运行验证: 覆盖素材库核心导航、工作台文案、brief/生成围绕素材库的关键 UI。
+  - [x] SubTask 13.1: 更新或新增前端测试，覆盖素材工作台入口和导航文案。
+  - [x] SubTask 13.2: 更新或新增前端测试，覆盖 brief 页面素材匹配/缺失素材/生成准备度文案。
+  - [x] SubTask 13.3: 更新或新增前端测试，覆盖生成/预览页面素材上下文和回流提示。
+  - [x] SubTask 13.4: 运行 `cd frontend && npm run lint && npm run typecheck && npm run test && npm run build`。
+
 # Task Dependencies
 
 - Task 2 depends on Task 1.
@@ -91,6 +112,10 @@
 - Task 7 depends on Task 1 through Task 6.
 - Task 8 depends on Task 1 through Task 7.
 - Task 9 depends on Task 1 through Task 8.
+- Task 10 depends on Task 1 through Task 9.
+- Task 11 depends on Task 10.
+- Task 12 depends on Task 11.
+- Task 13 depends on Task 11 and Task 12.
 
 # Acceptance Criteria
 
@@ -104,3 +129,6 @@
 - blocked 或合规风险素材默认不出现在普通检索结果中。
 - 前端提供素材库列表、上传、检索、详情、经验洞察的完整入口。
 - 后端 `pytest`、`compileall` 和前端 `lint`、`typecheck`、`test`、`build` 全部通过。
+- README 和开发文档清楚描述素材库为核心的产品模型、信息架构、页面职责和本地验证命令。
+- 前端默认入口和主导航体现素材工作台优先，brief 解析、素材生成、成片回流都围绕素材库上下文。
+- 新增或更新前端测试覆盖素材库核心工作台、导航、brief 素材匹配说明和生成回流提示。

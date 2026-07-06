@@ -20,8 +20,17 @@ const readyPayload = {
       prompt: '展示产品',
       shot_description: '完整镜头',
       reference_video_ids: [],
-      reference_image_ids: [],
+      reference_image_ids: ['55555555-5555-4555-8555-555555555555'],
       reference_audio_ids: [],
+    },
+  ],
+  references: [
+    {
+      id: '55555555-5555-4555-8555-555555555555',
+      asset_type: 'image',
+      purpose: '产品视觉参考',
+      source_file_id: 'file-image-1',
+      is_missing: false,
     },
   ],
   generation_tasks: [
@@ -89,11 +98,17 @@ describe('ResultPreviewPage', () => {
     renderPage();
 
     expect(await screen.findByText('片段已全部就绪，可合成最终 TVC')).toBeInTheDocument();
+    expect(screen.getByText('成片回流素材库')).toBeInTheDocument();
+    expect(screen.getByText('合成后将生成成品库候选素材')).toBeInTheDocument();
+    expect(screen.getByText(/本项目关联 1 个参考素材和 1 个生成片段/)).toBeInTheDocument();
+    expect(screen.getByText('片段结果与素材上下文')).toBeInTheDocument();
+    expect(screen.getByText(/参考上下文：1 个素材映射 · 生成片段会随成片一起进入回流链路/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '合成成片' }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenLastCalledWith(`http://localhost:9898/api/projects/${projectId}/final-result`, { method: 'POST' }));
     expect(await screen.findByText('下载成片')).toHaveAttribute('href', `http://localhost:9898/api/projects/${projectId}/files/final/download`);
     expect(screen.getByText('合成时长约 10 秒')).toBeInTheDocument();
+    expect(screen.getByText('成品资产已可进入成品库')).toBeInTheDocument();
   });
 
   it('拒绝通过 demo 路径进入成片详情', () => {

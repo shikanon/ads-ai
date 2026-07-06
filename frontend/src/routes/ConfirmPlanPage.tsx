@@ -331,6 +331,11 @@ export function ConfirmPlanPage() {
 
   const totalSegmentDuration = segments.reduce((sum, item) => sum + Number(item.duration_seconds || 0), 0);
   const missingReferences = references.filter((item) => item.is_missing);
+  const matchedReferences = references.filter((item) => !item.is_missing);
+  const materialCounts = countReferencesByType(matchedReferences);
+  const mappedSegmentCount = segments.filter((segment) => referenceUsageCount(segment) > 0).length;
+  const readinessLabel =
+    requirements.length > 0 && segments.length > 0 && missingReferences.length === 0 ? '生成准备度高' : '需要复核素材上下文';
   const isPlanConfirmed = generationPlan?.status === 'confirmed' || project?.status === 'confirmed';
 
   return (
@@ -338,7 +343,7 @@ export function ConfirmPlanPage() {
     <section className="panel">
       <p className="eyebrow">Step 3</p>
       <h2>查看和编辑解析结果</h2>
-      <p>Seed 2.1 会将 brief、需求文本和文件引用解析为结构化需求、参考素材和待补充素材。</p>
+      <p>Seed 2.1 会将 brief、需求文本和素材库证据解析为结构化需求、参考素材匹配和待补充素材。</p>
       <div className="form-actions">
         <button className="primary-action" type="button" onClick={() => void handleParse()} disabled={isParsing || isLoading || needsBriefInput}>
           {isParsing ? '解析中...' : '重新解析 brief'}
@@ -362,6 +367,30 @@ export function ConfirmPlanPage() {
         </div>
       ) : (
         <>
+          <div className="material-context-grid readiness-grid">
+            <article className="card material-context-card">
+              <span>需求理解</span>
+              <h3>{requirements.length} 条结构化需求</h3>
+              <p>{summary || '解析摘要为空，请补充 brief 或手动填写需求理解。'}</p>
+            </article>
+            <article className="card material-context-card">
+              <span>素材匹配</span>
+              <h3>{matchedReferences.length} 个可用参考素材</h3>
+              <p>
+                视频 {materialCounts.video} · 图片 {materialCounts.image} · 音频 {materialCounts.audio}，已映射到 {mappedSegmentCount}/{segments.length} 个片段。
+              </p>
+            </article>
+            <article className="card material-context-card">
+              <span>缺失素材</span>
+              <h3>{missingReferences.length > 0 ? `${missingReferences.length} 个待补充` : '暂无缺口'}</h3>
+              <p>{missingReferences.length > 0 ? '请确认替代提示词或补齐素材后再启动生成。' : '素材库上下文已覆盖当前解析出的参考项。'}</p>
+            </article>
+            <article className="card material-context-card">
+              <span>生成准备度</span>
+              <h3>{readinessLabel}</h3>
+              <p>{isPlanConfirmed ? '当前确认版本将作为 Seedance 生成输入。' : '保存并确认计划后，素材映射会随片段请求一并提交。'}</p>
+            </article>
+          </div>
           <div className="card status-card">
             <span>生成计划状态</span>
             <h3>{isPlanConfirmed ? '已确认' : '待确认'}</h3>
@@ -413,7 +442,10 @@ export function ConfirmPlanPage() {
             ))}
           </div>
           <div className="section-header">
-            <h3>参考素材与待补充素材</h3>
+            <div>
+              <h3>素材库匹配与待补充素材</h3>
+              <p>核对每个参考项是否有素材库文件证据，并把缺口保留为生成前的风险提示。</p>
+            </div>
             <button className="secondary-action compact-action" type="button" onClick={addMissingReference}>
               添加待补充素材
             </button>
@@ -522,9 +554,9 @@ export function ConfirmPlanPage() {
                   <textarea value={segment.continuity_notes ?? ''} onChange={(event) => updateSegment(segment.id, { continuity_notes: event.target.value })} />
                 </label>
                 <div className="full-width reference-picker">
-                  <strong>参考素材映射</strong>
+                  <strong>素材库上下文映射</strong>
                   {references.filter((reference) => !reference.is_missing).length === 0 ? (
-                    <span>暂无可映射素材，可先补充参考视频、图片或音频。</span>
+                    <span>暂无可映射素材，可先补充参考视频、图片或音频，或确认提示词已覆盖替代素材。</span>
                   ) : (
                     references
                       .filter((reference) => !reference.is_missing)
@@ -551,10 +583,10 @@ export function ConfirmPlanPage() {
           </div>
           <div className="form-actions">
             <button className="primary-action" type="button" onClick={() => void handleSaveSegments()} disabled={isSavingSegments || segments.length === 0}>
-              {isSavingSegments ? '保存中...' : '保存分段规划'}
+              {isSavingSegments ? '保存中...' : '保存素材上下文规划'}
             </button>
             <button className="primary-action" type="button" onClick={() => void handleConfirmPlan()} disabled={isConfirming || segments.length === 0}>
-              {isConfirming ? '确认中...' : '确认生成计划'}
+              {isConfirming ? '确认中...' : '确认生成计划与素材映射'}
             </button>
           </div>
         </>
@@ -582,4 +614,18 @@ function fieldForAssetType(assetType: ReferenceAsset['asset_type']): 'reference_
     return 'reference_audio_ids';
   }
   return 'reference_image_ids';
+}
+
+function countReferencesByType(references: ReferenceAsset[]): Record<ReferenceAsset['asset_type'], number> {
+  return references.reduce(
+    (counts, reference) => ({
+      ...counts,
+      [reference.asset_type]: counts[reference.asset_type] + 1,
+    }),
+    { video: 0, image: 0, audio: 0 },
+  );
+}
+
+function referenceUsageCount(segment: SegmentPlan): number {
+  return segment.reference_video_ids.length + segment.reference_image_ids.length + segment.reference_audio_ids.length;
 }

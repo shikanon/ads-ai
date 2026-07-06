@@ -6,6 +6,8 @@
 ## What Changes
 - 新增广告素材库后端领域模型、仓储、入库、预处理、AI 打标、向量化、VikingDB 知识库索引、混合检索、RAG 问答、效果回流和审计能力。
 - 新增素材库前端入口，支持素材列表、上传/导入、多模态检索、素材详情和经验洞察。
+- 将前端产品心智调整为“素材库驱动的广告生成工作台”，brief 解析、素材生成、成片回流围绕素材库展开。
+- 将素材库核心 UI 与开发说明沉淀到 `README.md` 和开发文档中，明确信息架构、工作流、页面职责和验证方式。
 - 豆包 Seed 模型统一使用 `doubao-seed-2-1-pro-260628`。
 - VikingDB 使用“向量数据库（知识库版本）”接入方式，API Key 只能通过 `VIKINGDB_API_KEY` 环境变量提供，禁止写入代码、测试快照、README 示例或 spec 文档。
 - 保留未配置外部服务时的 deterministic fallback，确保本地开发和自动化测试无需真实外部服务即可通过。
@@ -13,7 +15,7 @@
 
 ## Impact
 - Affected specs: 广告 TVC 制作网站、素材库入库、AI 自动打标、向量索引、混合检索、RAG 洞察、效果回流、安全合规、前端导航。
-- Affected code: `backend/app/config.py`、`backend/app/storage.py`、`backend/app/main.py`、新增 `backend/app/material_*.py`、新增 `backend/app/vikingdb_client.py`、新增后端测试、`frontend/src/main.tsx`、`frontend/src/routes/AppShell.tsx`、`frontend/src/types.ts`、新增素材库前端页面和测试、`.env.example`、`README.md`。
+- Affected code: `backend/app/config.py`、`backend/app/storage.py`、`backend/app/main.py`、新增 `backend/app/material_*.py`、新增 `backend/app/vikingdb_client.py`、新增后端测试、`frontend/src/main.tsx`、`frontend/src/routes/AppShell.tsx`、`frontend/src/types.ts`、新增素材库前端页面和测试、`frontend/src/styles.css`、`.env.example`、`README.md`、`docs/`。
 
 ## ADDED Requirements
 
@@ -133,6 +135,36 @@ The system SHALL provide user-facing material library pages with polished visual
 - **WHEN** user opens a material detail page
 - **THEN** the frontend SHALL show metadata, tags, index state, effect metrics and audit events
 
+### Requirement: 素材库核心工作台
+The system SHALL make the material library the primary product surface for ingestion, brief interpretation, generation context assembly and result backflow.
+
+#### Scenario: Material-first navigation
+- **WHEN** user enters the web app
+- **THEN** the navigation SHALL prioritize material workspace, material library, brief analysis, generation studio, insights/backflow and history records
+
+#### Scenario: Workspace overview
+- **WHEN** user opens the material workspace
+- **THEN** the frontend SHALL show the material-driven workflow, asset health, processing queues and next actions for ingestion, brief analysis, generation and RAG search
+
+#### Scenario: Brief around materials
+- **WHEN** user prepares or reviews brief inputs
+- **THEN** the UI SHALL communicate that brief parsing extracts requirements and matches reusable materials, missing assets and generation evidence from the material library
+
+#### Scenario: Generation around asset context
+- **WHEN** user reviews generation plans or outputs
+- **THEN** the UI SHALL show generation as a material-context process that uses selected references, produces finished assets and feeds results back into the material library
+
+### Requirement: 素材库方案文档化
+The system SHALL document the material-library-centered product model in README and developer documentation.
+
+#### Scenario: README explains product model
+- **WHEN** a developer reads `README.md`
+- **THEN** they SHALL understand that the material library is the core product surface and brief parsing/material generation are workflows around it
+
+#### Scenario: Developer docs explain implementation
+- **WHEN** a developer reads the development documentation
+- **THEN** they SHALL find the information architecture, key pages, frontend routes, backend boundaries, material backflow model and verification commands
+
 ## MODIFIED Requirements
 
 ### Requirement: Backend public config
@@ -148,6 +180,13 @@ Existing TVC project, history, generation, gallery and admin flows SHALL continu
 #### Scenario: Existing tests
 - **WHEN** existing backend and frontend test suites run
 - **THEN** previously passing tests SHALL continue to pass
+
+### Requirement: Frontend information architecture
+The frontend SHALL preserve existing TVC capabilities while reframing them as material-library-centered workflows rather than isolated project steps.
+
+#### Scenario: Legacy flow compatibility
+- **WHEN** existing project creation, brief input, plan confirmation, generation progress, preview, gallery, history and admin routes are used
+- **THEN** they SHALL remain reachable and covered by tests after the navigation and copy changes
 
 ## REMOVED Requirements
 No existing requirements are removed.

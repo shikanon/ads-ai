@@ -1,7 +1,7 @@
 import { AdminHomePage } from './AdminHomePage';
-import { ProjectCreatePage } from './ProjectCreatePage';
+import { MaterialWorkspacePage } from './MaterialWorkspacePage';
 import { isAdminHost } from './deploymentHosts';
 
 export function RootRoute({ hostname }: { hostname?: string }) {
-  return isAdminHost(hostname) ? <AdminHomePage /> : <ProjectCreatePage />;
+  return isAdminHost(hostname) ? <AdminHomePage /> : <MaterialWorkspacePage />;
 }

@@ -22,6 +22,18 @@ describe('BriefInputPage', () => {
     vi.restoreAllMocks();
   });
 
+  it('首屏说明 brief 解析围绕素材库证据、素材匹配和缺失素材展开', () => {
+    renderPage();
+
+    expect(screen.getByText('素材库证据接入')).toBeInTheDocument();
+    expect(screen.getByText('Brief、参考素材与需求文本统一入库')).toBeInTheDocument();
+    expect(screen.getByText(/后续 brief 解析会优先基于这些素材上下文生成需求理解/)).toBeInTheDocument();
+    expect(screen.getByText('素材匹配准备')).toBeInTheDocument();
+    expect(screen.getByText('视频 / 图片 / 音频分类型承载创意证据')).toBeInTheDocument();
+    expect(screen.getByText('缺失素材提示')).toBeInTheDocument();
+    expect(screen.getByText(/标记缺口，避免生成前遗漏关键 Logo、产品图或参考音频/)).toBeInTheDocument();
+  });
+
   it('提示用户至少提供一种 brief 输入', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -71,6 +83,8 @@ describe('BriefInputPage', () => {
     expect(await screen.findByText('已保存 brief 输入并完成关联')).toBeInTheDocument();
     expect(screen.getByText(`项目 ID：${projectId}`)).toBeInTheDocument();
     expect(screen.getByText('文件记录：1 个')).toBeInTheDocument();
+    expect(screen.getByText('素材匹配上下文已准备')).toBeInTheDocument();
+    expect(screen.getByText(/下一步解析会输出需求理解、\s*素材匹配、缺失素材和生成准备度/)).toBeInTheDocument();
     expect(screen.getByText(/红果短剧优质达人合作brief-B站/)).toBeInTheDocument();
     expect(screen.getByText(/共 3 页，已渲染 2 页，已按配置截断/)).toBeInTheDocument();
     expect(screen.getByText(/将随 Seed 2.1 请求用于视觉理解/)).toBeInTheDocument();

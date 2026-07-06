@@ -18,3 +18,12 @@
 - [x] 现有 TVC 项目、brief 解析、生成、历史、画廊、admin 路由测试继续通过
 - [x] 后端全量验证 `python3 -m pytest && python3 -m compileall app` 通过
 - [x] 前端全量验证 `npm run lint && npm run typecheck && npm run test && npm run build` 通过
+- [x] README 已说明素材库是主产品表面，brief 解析、素材生成、成片回流围绕素材库展开
+- [x] 开发文档已说明素材库核心信息架构、页面职责、后端边界、素材回流和验证命令
+- [x] 文档不包含真实 API Key，只说明通过环境变量配置外部服务密钥
+- [x] 前端主导航优先展示素材工作台、素材库、Brief 解析、生成工坊、洞察回流和历史记录
+- [x] 素材工作台页面展示素材驱动流程、处理队列、关键入口和下一步动作
+- [x] Brief 页面展示或说明需求理解、素材匹配、缺失素材和生成准备度
+- [x] 生成或预览页面展示素材上下文、参考素材使用和结果回流素材库提示
+- [x] 现有项目创建、brief、生成、预览、画廊、历史和 admin 路由保持可达并有测试覆盖
+- [x] 前端验证 `npm run lint && npm run typecheck && npm run test && npm run build` 通过

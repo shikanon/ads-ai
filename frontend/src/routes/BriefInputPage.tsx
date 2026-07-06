@@ -110,7 +110,24 @@ export function BriefInputPage() {
     <section className="panel">
       <p className="eyebrow">Step 2</p>
       <h2>输入 brief 与参考素材</h2>
-      <p>支持 PDF/PPT brief、参考视频、参考图片、参考音频和自由文本需求。</p>
+      <p>支持 PDF/PPT brief、参考视频、参考图片、参考音频和自由文本需求，并将输入沉淀为素材库可复用的解析证据。</p>
+      <div className="material-context-grid">
+        <article className="card material-context-card">
+          <span>素材库证据接入</span>
+          <h3>Brief、参考素材与需求文本统一入库</h3>
+          <p>提交后会保存文件记录、模型文件引用和参考素材关系，后续 brief 解析会优先基于这些素材上下文生成需求理解。</p>
+        </article>
+        <article className="card material-context-card">
+          <span>素材匹配准备</span>
+          <h3>视频 / 图片 / 音频分类型承载创意证据</h3>
+          <p>参考素材会在确认页映射到具体片段，帮助 Seedance 生成时继承品牌资产、画面风格、声音情绪和镜头节奏。</p>
+        </article>
+        <article className="card material-context-card">
+          <span>缺失素材提示</span>
+          <h3>未上传的参考项会转为待补充清单</h3>
+          <p>如果 brief 提到但没有提供素材，系统会在解析后标记缺口，避免生成前遗漏关键 Logo、产品图或参考音频。</p>
+        </article>
+      </div>
       <form className="form-grid" onSubmit={(event) => void handleSubmit(event)}>
         <label className="full-width">
           Brief 文件
@@ -170,6 +187,13 @@ export function BriefInputPage() {
               <li>文件记录：{result.files.length} 个</li>
               <li>参考素材：{result.references.length} 个</li>
             </ul>
+            <div className="extract-summary material-upload-summary">
+              <strong>素材匹配上下文已准备</strong>
+              <p>
+                已将 {result.files.length} 个 brief/文件证据和 {result.references.length} 个参考素材写入项目上下文；下一步解析会输出需求理解、
+                素材匹配、缺失素材和生成准备度。
+              </p>
+            </div>
             {result.files.some((file) => file.metadata?.extracted_summary) && (
               <div className="extract-summary">
                 <strong>Brief 文本摘要</strong>

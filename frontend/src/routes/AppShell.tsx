@@ -1,11 +1,12 @@
 import { Link, Outlet } from 'react-router-dom';
 
 const steps = [
-  { label: '新建项目', to: '/projects/new' },
-  { label: '历史项目', to: '/history' },
-  { label: '成品画廊', to: '/gallery' },
+  { label: '素材工作台', to: '/' },
   { label: '素材库', to: '/materials' },
-  { label: '素材检索', to: '/materials/search' },
+  { label: 'Brief 解析', to: '/projects/new' },
+  { label: '生成工坊', to: '/gallery' },
+  { label: '洞察回流', to: '/materials/insights' },
+  { label: '历史记录', to: '/history' },
 ];
 
 export function AppShell() {

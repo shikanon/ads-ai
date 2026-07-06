@@ -13,6 +13,7 @@ import { MaterialInsightsPage } from './routes/MaterialInsightsPage';
 import { MaterialLibraryPage } from './routes/MaterialLibraryPage';
 import { MaterialSearchPage } from './routes/MaterialSearchPage';
 import { MaterialUploadPage } from './routes/MaterialUploadPage';
+import { MaterialWorkspacePage } from './routes/MaterialWorkspacePage';
 import { ProjectCreatePage } from './routes/ProjectCreatePage';
 import { ResultPreviewPage } from './routes/ResultPreviewPage';
 import { RootRoute } from './routes/RootRoute';
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
       { path: 'history', element: <HistoryPage /> },
       { path: 'gallery', element: <GalleryPage /> },
       { path: 'admin', element: <AdminHomePage /> },
+      { path: 'workspace', element: <MaterialWorkspacePage /> },
       { path: 'materials', element: <MaterialLibraryPage /> },
       { path: 'materials/upload', element: <MaterialUploadPage /> },
       { path: 'materials/search', element: <MaterialSearchPage /> },

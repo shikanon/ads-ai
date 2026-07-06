@@ -24,6 +24,15 @@ const failedPayload = {
       reference_audio_ids: [],
     },
   ],
+  references: [
+    {
+      id: '44444444-4444-4444-8444-444444444444',
+      asset_type: 'video',
+      purpose: '开场参考',
+      source_file_id: 'file-video-1',
+      is_missing: false,
+    },
+  ],
   generation_tasks: [
     {
       id: taskId,
@@ -79,6 +88,12 @@ describe('GenerationProgressPage', () => {
 
     expect(await screen.findByText('失败')).toBeInTheDocument();
     expect(screen.getByText('Seedance 2.0 任务失败')).toBeInTheDocument();
+    expect(screen.getByText('素材上下文')).toBeInTheDocument();
+    expect(screen.getByText('已随生成任务使用素材库证据')).toBeInTheDocument();
+    expect(screen.getByText(/当前素材上下文：视频 1 · 图片 0 · 音频 0/)).toBeInTheDocument();
+    expect(screen.getByText(/生成结果将用于成片库回流/)).toBeInTheDocument();
+    expect(screen.getByText(/本片段素材使用：视频 1 · 图片 0 · 音频 0/)).toBeInTheDocument();
+    expect(screen.getByText(/素材映射：0 个确认页参考项将作为本片段生成上下文/)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '重试该片段' }));
 
