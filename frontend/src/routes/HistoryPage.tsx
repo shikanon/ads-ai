@@ -26,6 +26,7 @@ export function HistoryPage() {
   const [projects, setProjects] = useState<ProjectHistorySummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingProjectId, setDeletingProjectId] = useState('');
+  const [pendingDeleteProject, setPendingDeleteProject] = useState<ProjectHistorySummary | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -49,7 +50,18 @@ export function HistoryPage() {
     }
   }
 
-  async function handleDelete(projectId: string) {
+  function askDelete(project: ProjectHistorySummary) {
+    setPendingDeleteProject(project);
+    setErrorMessage('');
+  }
+
+  function cancelDelete() {
+    setPendingDeleteProject(null);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDeleteProject) return;
+    const projectId = pendingDeleteProject.id;
     setDeletingProjectId(projectId);
     setErrorMessage('');
     try {
@@ -59,6 +71,7 @@ export function HistoryPage() {
         throw new Error(payload.error?.message ?? '删除历史项目失败');
       }
       setProjects((items) => items.filter((item) => item.id !== projectId));
+      setPendingDeleteProject(null);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '删除历史项目失败');
     } finally {
@@ -117,7 +130,7 @@ export function HistoryPage() {
                 <button
                   className="secondary-action compact-action danger-action"
                   type="button"
-                  onClick={() => void handleDelete(project.id)}
+                  onClick={() => askDelete(project)}
                   disabled={deletingProjectId === project.id}
                 >
                   {deletingProjectId === project.id ? '删除中...' : '删除'}
@@ -125,6 +138,32 @@ export function HistoryPage() {
               </div>
             </article>
           ))}
+        </div>
+      )}
+
+      {pendingDeleteProject && (
+        <div className="confirm-dialog-overlay" role="dialog" aria-modal="true" aria-label="删除项目确认">
+          <div className="confirm-dialog delete-confirm-dialog">
+            <span className="dialog-icon" aria-hidden="true">⚠️</span>
+            <h3>确认删除项目「{pendingDeleteProject.name}」？</h3>
+            <div className="warning-card dialog-warning">
+              <strong>此操作不可撤销</strong>
+              <ul>
+                <li>项目的解析结果、分段规划和生成计划将被永久删除</li>
+                <li>已生成的视频片段和成片文件将一并清除</li>
+                <li>上传的素材文件不会被删除（可在素材库中管理）</li>
+              </ul>
+            </div>
+            <p>删除后无法恢复，请确认您不再需要此项目。</p>
+            <div className="confirm-dialog-actions">
+              <button type="button" className="secondary-action" onClick={cancelDelete} disabled={deletingProjectId === pendingDeleteProject.id}>
+                取消
+              </button>
+              <button type="button" className="primary-action danger" onClick={() => void confirmDelete()} disabled={deletingProjectId === pendingDeleteProject.id}>
+                {deletingProjectId === pendingDeleteProject.id ? '删除中...' : '确认删除'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>
