@@ -52,12 +52,9 @@ describe('HistoryPage', () => {
     expect(screen.getByText('确认方案恢复页')).toBeInTheDocument();
   });
 
-  it('支持删除历史项目', async () => {
+  it('删除项目需要二次确认，取消后不执行删除', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValueOnce(historyResponse()).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ deleted: true, project_id: projectId }),
-    });
+    const fetchMock = vi.fn().mockResolvedValue(historyResponse());
     vi.stubGlobal('fetch', fetchMock);
 
     renderPage();
@@ -65,7 +62,35 @@ describe('HistoryPage', () => {
     expect(await screen.findByText('新品 TVC')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '删除' }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenLastCalledWith(`http://localhost:9898/api/projects/${projectId}`, { method: 'DELETE' }));
+    expect(screen.getByText('确认删除项目「新品 TVC」？')).toBeInTheDocument();
+    expect(screen.getByText('此操作不可撤销')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: '取消' }));
+    expect(screen.queryByText('确认删除项目「新品 TVC」？')).not.toBeInTheDocument();
+    expect(screen.getByText('新品 TVC')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('确认删除后调用 DELETE API 并移除项目', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(historyResponse())
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ deleted: true, project_id: projectId }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderPage();
+
+    expect(await screen.findByText('新品 TVC')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '删除' }));
+    expect(screen.getByText('确认删除项目「新品 TVC」？')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '确认删除' }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith(`http://localhost:9898/api/projects/${projectId}`, { method: 'DELETE' }),
+    );
     expect(screen.queryByText('新品 TVC')).not.toBeInTheDocument();
   });
 });

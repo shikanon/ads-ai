@@ -19,6 +19,8 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: '新建项目' })).toHaveAttribute('href', '/projects/new');
     expect(screen.getByRole('link', { name: '历史项目' })).toHaveAttribute('href', '/history');
     expect(screen.getByRole('link', { name: '成品画廊' })).toHaveAttribute('href', '/gallery');
+    expect(screen.getByRole('link', { name: '素材库' })).toHaveAttribute('href', '/materials');
+    expect(screen.getByRole('link', { name: '素材检索' })).toHaveAttribute('href', '/materials/search');
     expect(screen.queryByRole('link', { name: '输入 brief' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '成片预览' })).not.toBeInTheDocument();
   });
