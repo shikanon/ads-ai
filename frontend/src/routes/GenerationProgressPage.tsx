@@ -14,13 +14,13 @@ const statusLabels: Record<GenerationProgress['status'], string> = {
   retrying: '重试中',
 };
 
-const statusPercent: Record<GenerationProgress['status'], number> = {
-  pending: 5,
-  submitted: 20,
-  running: 60,
-  retrying: 35,
-  succeeded: 100,
-  failed: 100,
+const statusDotClass: Record<GenerationProgress['status'], string> = {
+  pending: 'status-dot pending',
+  submitted: 'status-dot running',
+  running: 'status-dot running',
+  retrying: 'status-dot running',
+  succeeded: 'status-dot succeeded',
+  failed: 'status-dot failed',
 };
 
 export function GenerationProgressPage() {
@@ -100,25 +100,57 @@ export function GenerationProgressPage() {
     }
   }
 
-  const taskBySegmentId = new Map(tasks.map((task) => [task.segment_id, task]));
+  const taskBySegmentId = useMemo(() => new Map(tasks.map((task) => [task.segment_id, task])), [tasks]);
   const completedCount = tasks.filter((task) => task.status === 'succeeded').length;
   const failedCount = tasks.filter((task) => task.status === 'failed').length;
-  const overallPercent = segments.length > 0 ? Math.round((completedCount / segments.length) * 100) : 0;
+  const runningCount = tasks.filter((task) => task.status === 'submitted' || task.status === 'running' || task.status === 'retrying').length;
+  const hasAnyReady = completedCount > 0;
+  const allSegmentsReady = segments.length > 0 && completedCount === segments.length;
+
+  const overallStatusLabel = useMemo(() => {
+    if (segments.length === 0) return '未开始';
+    if (failedCount > 0 && runningCount === 0 && completedCount === 0) return '生成失败';
+    if (allSegmentsReady) return '全部片段已生成';
+    if (runningCount > 0) return '正在生成片段';
+    if (completedCount > 0 && failedCount > 0) return '部分完成，存在失败片段';
+    if (completedCount > 0) return '部分片段已完成';
+    if (failedCount > 0) return '等待处理失败片段';
+    return '等待生成';
+  }, [segments.length, completedCount, failedCount, runningCount, allSegmentsReady]);
 
   return (
     apiProjectId ? (
     <section className="panel">
       <p className="eyebrow">Step 4</p>
       <h2>生成进度</h2>
-      <p>展示每个 Seedance 2.0 片段任务的状态、错误原因、重试入口和预览结果。</p>
+      <p>展示每个 Seedance 2.0 片段任务的状态、错误原因、重试入口和预览结果。视频生成时间因片长和队列情况而异，请耐心等待。</p>
       <div className="card status-card">
         <span>项目状态</span>
         <h3>{projectStatus || '未开始'}</h3>
-        <p>
+        <p>{overallStatusLabel}</p>
+        <p className="meta-line">
           已完成 {completedCount}/{segments.length} 段
+          {runningCount > 0 ? ` · ${runningCount} 段生成中` : ''}
           {failedCount > 0 ? ` · ${failedCount} 段失败，可单独重试` : ''}
         </p>
-        <progress max="100" value={overallPercent} />
+        {segments.length > 0 && (
+          <div className="segment-tracker" aria-label="片段生成进度">
+            {segments.map((segment) => {
+              const task = taskBySegmentId.get(segment.id);
+              const st = task?.status ?? 'pending';
+              const isActive = st === 'submitted' || st === 'running' || st === 'retrying';
+              return (
+                <span
+                  key={segment.id}
+                  className={`segment-tracker-dot ${st}${isActive ? ' pulse' : ''}`}
+                  title={`片段 ${segment.order}：${segment.title} · ${statusLabels[st]}`}
+                >
+                  {segment.order}
+                </span>
+              );
+            })}
+          </div>
+        )}
       </div>
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       {isLoading ? (
@@ -136,9 +168,14 @@ export function GenerationProgressPage() {
         {segments.map((segment) => {
           const task = taskBySegmentId.get(segment.id);
           const taskStatus = task?.status ?? 'pending';
+          const isBusy = taskStatus === 'submitted' || taskStatus === 'running' || taskStatus === 'retrying';
           return (
-          <article className="card" key={segment.id}>
-            <span>{statusLabels[taskStatus]}</span>
+          <article className="card segment-task-card" key={segment.id}>
+            <div className="segment-status-header">
+              <span className={statusDotClass[taskStatus]} aria-hidden="true" />
+              <span className="segment-status-label">{statusLabels[taskStatus]}</span>
+              {isBusy && <span className="spinner inline-spinner" aria-hidden="true" />}
+            </div>
             <h3>
               片段 {segment.order}：{segment.title}
             </h3>
@@ -146,7 +183,6 @@ export function GenerationProgressPage() {
               时长 {segment.duration_seconds} 秒 · 重试 {task?.retry_count ?? 0} 次
               {task?.provider_task_id ? ` · 任务 ID：${task.provider_task_id}` : ''}
             </p>
-            <progress max="100" value={statusPercent[taskStatus]} />
             {task?.request_summary?.reference_counts && (
               <p className="meta-line">
                 参考素材：视频 {task.request_summary.reference_counts.video ?? 0} · 图片 {task.request_summary.reference_counts.image ?? 0} · 音频{' '}
@@ -180,9 +216,24 @@ export function GenerationProgressPage() {
       <Link className="secondary-action" to={`/projects/${apiProjectId}/confirm`}>
         返回确认方案
       </Link>
-      <Link className="primary-action" to={`/projects/${apiProjectId}/preview`}>
-        查看成片预览
-      </Link>
+      {hasAnyReady ? (
+        <Link
+          className={`primary-action${allSegmentsReady ? '' : ' preview-partial'}`}
+          to={`/projects/${apiProjectId}/preview`}
+          title={allSegmentsReady ? '查看并合成完整成片' : `${completedCount} 个片段已就绪，可预览已完成片段并在全部完成后合成成片`}
+        >
+          {allSegmentsReady ? '查看成片预览 →' : `查看已完成片段 (${completedCount}/${segments.length}) →`}
+        </Link>
+      ) : (
+        <span
+          className="primary-action disabled-action"
+          role="link"
+          aria-disabled="true"
+          title="至少有一个片段生成完成后才可预览"
+        >
+          查看成片预览（等待片段生成）
+        </span>
+      )}
       </div>
     </section>
     ) : (
