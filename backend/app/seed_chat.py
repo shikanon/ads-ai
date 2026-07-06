@@ -10,10 +10,11 @@ from app.models import FileRecord
 
 
 class SeedChatClient:
-    def __init__(self, api_key: str, base_url: str, model_name: str):
+    def __init__(self, api_key: str, base_url: str, model_name: str, timeout_seconds: int = 90):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.model_name = model_name
+        self.timeout_seconds = timeout_seconds
 
     def complete_json(
         self,
@@ -27,7 +28,7 @@ class SeedChatClient:
             return {}
 
         try:
-            with httpx.Client(timeout=90) as client:
+            with httpx.Client(timeout=self.timeout_seconds) as client:
                 response = client.post(
                     f"{self.base_url}/chat/completions",
                     headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},

@@ -8,6 +8,11 @@ import { ConfirmPlanPage } from './routes/ConfirmPlanPage';
 import { GalleryPage } from './routes/GalleryPage';
 import { GenerationProgressPage } from './routes/GenerationProgressPage';
 import { HistoryPage } from './routes/HistoryPage';
+import { MaterialDetailPage } from './routes/MaterialDetailPage';
+import { MaterialInsightsPage } from './routes/MaterialInsightsPage';
+import { MaterialLibraryPage } from './routes/MaterialLibraryPage';
+import { MaterialSearchPage } from './routes/MaterialSearchPage';
+import { MaterialUploadPage } from './routes/MaterialUploadPage';
 import { ProjectCreatePage } from './routes/ProjectCreatePage';
 import { ResultPreviewPage } from './routes/ResultPreviewPage';
 import { RootRoute } from './routes/RootRoute';
@@ -22,6 +27,11 @@ const router = createBrowserRouter([
       { path: 'history', element: <HistoryPage /> },
       { path: 'gallery', element: <GalleryPage /> },
       { path: 'admin', element: <AdminHomePage /> },
+      { path: 'materials', element: <MaterialLibraryPage /> },
+      { path: 'materials/upload', element: <MaterialUploadPage /> },
+      { path: 'materials/search', element: <MaterialSearchPage /> },
+      { path: 'materials/insights', element: <MaterialInsightsPage /> },
+      { path: 'materials/:materialId', element: <MaterialDetailPage /> },
       { path: 'projects/new', element: <ProjectCreatePage /> },
       { path: 'projects/:projectId/brief', element: <BriefInputPage /> },
       { path: 'projects/:projectId/confirm', element: <ConfirmPlanPage /> },

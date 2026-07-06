@@ -4,6 +4,8 @@ const steps = [
   { label: '新建项目', to: '/projects/new' },
   { label: '历史项目', to: '/history' },
   { label: '成品画廊', to: '/gallery' },
+  { label: '素材库', to: '/materials' },
+  { label: '素材检索', to: '/materials/search' },
 ];
 
 export function AppShell() {

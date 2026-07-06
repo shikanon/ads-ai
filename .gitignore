@@ -5,6 +5,25 @@
 .env.*
 !.env.example
 
+# Secrets and credentials
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*secret*
+*secrets*
+*credential*
+*credentials*
+service-account*.json
+credentials*.json
+token*.json
+apikey*.json
+api-key*.json
+
 # Python
 __pycache__/
 *.py[cod]
@@ -23,3 +42,9 @@ coverage/
 
 # Runtime data
 backend/storage/
+storage/
+uploads/
+tmp/
+temp/
+logs/
+*.log
