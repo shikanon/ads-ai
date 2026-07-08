@@ -135,6 +135,14 @@ The system SHALL provide user-facing material library pages with polished visual
 - **WHEN** user opens a material detail page
 - **THEN** the frontend SHALL show metadata, tags, index state, effect metrics and audit events
 
+#### Scenario: PC-first material browsing
+- **WHEN** user opens the material workspace or material library on a desktop browser
+- **THEN** the frontend SHALL prioritize PC layouts with dense asset presentation, visible filters, visible context panels and no mobile-first fallback design
+
+#### Scenario: Mock asset display
+- **WHEN** backend data is unavailable or sparse
+- **THEN** the frontend SHALL show realistic mock/demo materials across raw, finished and knowledge library views so the library remains easy to understand and visually useful
+
 ### Requirement: 素材库核心工作台
 The system SHALL make the material library the primary product surface for ingestion, brief interpretation, generation context assembly and result backflow.
 
@@ -145,6 +153,10 @@ The system SHALL make the material library the primary product surface for inges
 #### Scenario: Workspace overview
 - **WHEN** user opens the material workspace
 - **THEN** the frontend SHALL show the material-driven workflow, asset health, processing queues and next actions for ingestion, brief analysis, generation and RAG search
+
+#### Scenario: Before-and-after impact
+- **WHEN** user opens the material workspace
+- **THEN** the frontend SHALL show before-and-after impact indicators for reuse rate, retrieval time, duplicate creation reduction, high-performing material reuse and risk interception
 
 #### Scenario: Brief around materials
 - **WHEN** user prepares or reviews brief inputs
@@ -164,6 +176,44 @@ The system SHALL document the material-library-centered product model in README 
 #### Scenario: Developer docs explain implementation
 - **WHEN** a developer reads the development documentation
 - **THEN** they SHALL find the information architecture, key pages, frontend routes, backend boundaries, material backflow model and verification commands
+
+### Requirement: 素材库展示与解释性 UI
+The system SHALL implement the PC-only display plan from `docs/plans/2026-07-07-material-library-display-ui-plan.md`.
+
+#### Scenario: Explain recall and ranking
+- **WHEN** user browses or filters the material library
+- **THEN** the frontend SHALL show an index and recall explanation covering vector recall, tag filtering, effect weighting and RAG citation sources
+
+#### Scenario: Inspect ingestion pipeline
+- **WHEN** user opens a material detail
+- **THEN** the frontend SHALL show an ingestion pipeline covering receive, clean, dedupe, metadata extraction, tagging, vectorization, indexing completion and risk validation
+
+#### Scenario: Manage tags in Inspector
+- **WHEN** user selects a material in the library or opens detail context
+- **THEN** the frontend SHALL provide a MaterialInspector tag management area supporting add, delete, edit and confirm AI tag actions
+
+#### Scenario: Respect tag governance
+- **WHEN** user edits tags
+- **THEN** AI tags SHALL be confirmable/editable/deletable, confirmed AI tags SHALL become human-calibrated, effect tags SHALL not be directly deleted, compliance tag deletion SHALL require explicit confirmation copy and audit context, and locked tags SHALL be read-only
+
+#### Scenario: Batch tagging
+- **WHEN** user selects multiple materials in the library
+- **THEN** the frontend SHALL expose batch add tag, batch remove tag and batch confirm AI tags actions in a desktop fixed action bar
+
+#### Scenario: Tag model fields
+- **WHEN** mock/demo tag data is rendered
+- **THEN** tags SHALL include or derive `name`, `dimension`, `source`, `confidence`, `createdBy`, `updatedAt` and `locked` fields for display and governance rules
+
+### Requirement: Impeccable UI review and iteration
+The implementation SHALL be reviewed against the impeccable product UI guidance and iterated once using concrete improvement suggestions.
+
+#### Scenario: Review after implementation
+- **WHEN** the initial UI implementation and tests are complete
+- **THEN** the agent SHALL evaluate visual hierarchy, PC density, information architecture, tag governance clarity, copy, accessibility and anti-pattern compliance
+
+#### Scenario: Iterate from review
+- **WHEN** actionable issues are found in the UI review
+- **THEN** the agent SHALL implement reasonable improvements and re-run relevant frontend verification
 
 ## MODIFIED Requirements
 

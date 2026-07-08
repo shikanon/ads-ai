@@ -102,6 +102,38 @@
   - [x] SubTask 13.3: 更新或新增前端测试，覆盖生成/预览页面素材上下文和回流提示。
   - [x] SubTask 13.4: 运行 `cd frontend && npm run lint && npm run typecheck && npm run test && npm run build`。
 
+- [x] Task 14: 实现 PC-only 素材工作台展示增强: 基于 `docs/plans/2026-07-07-material-library-display-ui-plan.md` 增加 mock 展示和改造前后效果区域，让素材库不仅能上传，也能直接展示资产价值。
+  - [x] SubTask 14.1: 在 `MaterialWorkspacePage.tsx` 增加改造前后效果区域，展示复用率、检索耗时、重复创作减少、高效果素材复用和风险拦截。
+  - [x] SubTask 14.2: 补充真实感 mock/demo 数据，覆盖 raw 原始素材、finished 成品库和 knowledge 经验库。
+  - [x] SubTask 14.3: 保持 PC 桌面信息密度和视觉层级，不引入移动端折叠、抽屉或触屏优先交互。
+  - [x] SubTask 14.4: 更新 `MaterialWorkspacePage.test.tsx` 覆盖改造前后效果指标和三类资产展示。
+
+- [x] Task 15: 重构素材库浏览页为 PC 资产流与解释性检索界面: 展示资产行、筛选、Inspector、索引与召回解释、批量操作条。
+  - [x] SubTask 15.1: 将 `MaterialLibraryPage.tsx` 从单纯卡片网格升级为 PC 三栏或近似三栏布局，包含筛选区、资产流和 MaterialInspector。
+  - [x] SubTask 15.2: 增加索引与召回解释区域，展示向量召回、标签过滤、效果加权、RAG 引用来源和召回来源占比。
+  - [x] SubTask 15.3: 资产行展示缩略图/摘要、库类型、素材类型、状态、标签、CTR/CVR/复用次数、匹配原因和快捷动作。
+  - [x] SubTask 15.4: 增加桌面固定批量操作条，支持批量加标签、批量移除标签、批量确认 AI 标签。
+  - [x] SubTask 15.5: 更新 `MaterialLibraryPage.test.tsx` 覆盖三类库筛选、召回解释、资产行和批量操作文案。
+
+- [x] Task 16: 增强素材详情页与 MaterialInspector 标签治理: 增加入库流水线和标签管理规则，明确 AI、效果、合规、locked 标签行为。
+  - [x] SubTask 16.1: 扩展 `frontend/src/types.ts` 的标签展示模型或派生类型，支持 `name`、`dimension`、`source`、`confidence`、`createdBy`、`updatedAt`、`locked`、`hidden`、`excludedFromRanking`。
+  - [x] SubTask 16.2: 在 `MaterialDetailPage.tsx` 增加入库流水线模块，覆盖接收、清洗、去重、元数据、打标、向量化、索引完成、风险校验。
+  - [x] SubTask 16.3: 在详情或 Inspector 区域增加标签管理 UI，支持新增、删除、编辑、确认 AI 标签的可见操作。
+  - [x] SubTask 16.4: 展示效果标签不可直接删除、合规标签删除需二次确认、locked 标签只读的规则说明和禁用态。
+  - [x] SubTask 16.5: 更新 `MaterialDetailPage.test.tsx` 覆盖入库流水线、标签管理、AI 标签确认、效果标签保护和合规标签审计提示。
+
+- [x] Task 17: 运行 impeccable UI 检查并按建议迭代: 对实现后的 PC 素材库 UI 做产品界面审查，输出优化建议并完成一轮合理改进。
+  - [x] SubTask 17.1: 使用 impeccable 产品 UI 规则审查素材工作台、素材库浏览页和素材详情页的视觉层级、PC 密度、解释性、标签治理、文案和禁用反模式。
+  - [x] SubTask 17.2: 记录详细优化建议到 `progress.md` 的本轮总结中，不额外创建非 spec 报告文档。
+  - [x] SubTask 17.3: 根据建议完成一轮可执行 UI 改进，优先修正层级混乱、信息拥挤、文案不清、状态不明确或交互不可见问题。
+
+- [x] Task 18: 前端验证与构建: 对本次 UI 改造运行相关测试、lint、typecheck 和 build，确保现有素材库与 TVC 路由不回退。
+  - [x] SubTask 18.1: 运行 `cd frontend && npm run lint`。
+  - [x] SubTask 18.2: 运行 `cd frontend && npm run typecheck`。
+  - [x] SubTask 18.3: 运行 `cd frontend && npm run test`。
+  - [x] SubTask 18.4: 运行 `cd frontend && npm run build`。
+  - [x] SubTask 18.5: 如生成 `frontend/dist` 且未纳入版本管理，验证后清理构建产物。
+
 # Task Dependencies
 
 - Task 2 depends on Task 1.
@@ -116,6 +148,11 @@
 - Task 11 depends on Task 10.
 - Task 12 depends on Task 11.
 - Task 13 depends on Task 11 and Task 12.
+- Task 14 depends on Task 13.
+- Task 15 depends on Task 14.
+- Task 16 depends on Task 15.
+- Task 17 depends on Task 14 through Task 16.
+- Task 18 depends on Task 17.
 
 # Acceptance Criteria
 
@@ -132,3 +169,9 @@
 - README 和开发文档清楚描述素材库为核心的产品模型、信息架构、页面职责和本地验证命令。
 - 前端默认入口和主导航体现素材工作台优先，brief 解析、素材生成、成片回流都围绕素材库上下文。
 - 新增或更新前端测试覆盖素材库核心工作台、导航、brief 素材匹配说明和生成回流提示。
+- 素材工作台展示三类资产 mock/demo 数据和改造前后效果指标。
+- 素材库浏览页以 PC 资产流为核心，展示索引与召回解释、资产行、Inspector 和批量标注操作。
+- 素材详情页展示入库流水线和标签治理规则。
+- 标签管理支持新增、删除、编辑、确认 AI 标签，并明确效果标签、合规标签和 locked 标签限制。
+- 使用 impeccable 产品 UI 规则完成审查，并至少进行一轮合理 UI 改进。
+- 前端 `lint`、`typecheck`、`test`、`build` 全部通过。

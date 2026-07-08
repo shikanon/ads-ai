@@ -23,4 +23,25 @@ describe('MaterialWorkspacePage', () => {
     expect(screen.getByRole('link', { name: '进入 Brief 解析' })).toHaveAttribute('href', '/projects/new');
     expect(screen.getByRole('link', { name: '查看洞察回流' })).toHaveAttribute('href', '/materials/insights');
   });
+
+  it('展示改造前后效果指标和 raw finished knowledge 三类资产', () => {
+    render(
+      <MemoryRouter>
+        <MaterialWorkspacePage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('改造前后效果')).toBeInTheDocument();
+    expect(screen.getByText('复用率')).toBeInTheDocument();
+    expect(screen.getByText('检索耗时')).toBeInTheDocument();
+    expect(screen.getByText('重复创作减少')).toBeInTheDocument();
+    expect(screen.getByText('高效果素材复用')).toBeInTheDocument();
+    expect(screen.getByText('风险拦截')).toBeInTheDocument();
+    expect(screen.getByText('防晒喷雾户外实测原始片段')).toBeInTheDocument();
+    expect(screen.getByText('烟洞线索抓奸反转短剧前贴')).toBeInTheDocument();
+    expect(screen.getByText('短剧前贴 3 秒强钩子脚本结构')).toBeInTheDocument();
+    expect(screen.getAllByText('raw').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('finished').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('knowledge').length).toBeGreaterThan(0);
+  });
 });

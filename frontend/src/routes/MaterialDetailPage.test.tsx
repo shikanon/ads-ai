@@ -20,11 +20,31 @@ describe('MaterialDetailPage', () => {
     renderPage();
 
     expect(screen.getByText('夏日饮料高转化片头')).toBeInTheDocument();
-    expect(screen.getByText('场景: 冰饮')).toBeInTheDocument();
+    expect(screen.getAllByText('场景: 冰饮').length).toBeGreaterThan(0);
     expect(screen.getByText('indexed')).toBeInTheDocument();
     expect(screen.getByText('ctr')).toBeInTheDocument();
     expect(screen.getByText('0.12')).toBeInTheDocument();
     expect(screen.getByText('material.index_saved')).toBeInTheDocument();
+  });
+
+  it('展示入库流水线、标签管理和标签治理规则', () => {
+    renderPage();
+
+    expect(screen.getByLabelText('入库流水线')).toBeInTheDocument();
+    expect(screen.getByText('接收')).toBeInTheDocument();
+    expect(screen.getByText('清洗')).toBeInTheDocument();
+    expect(screen.getByText('去重')).toBeInTheDocument();
+    expect(screen.getByText('元数据')).toBeInTheDocument();
+    expect(screen.getByText('打标')).toBeInTheDocument();
+    expect(screen.getByText('向量化')).toBeInTheDocument();
+    expect(screen.getByText('索引完成')).toBeInTheDocument();
+    expect(screen.getByText('风险校验')).toBeInTheDocument();
+    expect(screen.getByLabelText('标签管理操作')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: '确认 AI 标签' }).length).toBeGreaterThan(0);
+    expect(screen.getByText('效果标签不可直接删除，只能隐藏或标记不参与排序')).toBeInTheDocument();
+    expect(screen.getByText('合规标签删除需二次确认文案，并写入审计记录')).toBeInTheDocument();
+    expect(screen.getByText('locked 标签只读')).toBeInTheDocument();
+    expect(screen.getByText('AI 标签确认后会作为人工校准结果参与检索排序。')).toBeInTheDocument();
   });
 });
 
@@ -54,11 +74,58 @@ function detailResult() {
         id: 'tag-1',
         material_id: materialId,
         category: 'content',
+        dimension: 'content',
         name: '场景',
         value: '冰饮',
         confidence: 0.94,
         source: 'ai',
         needs_review: false,
+        createdBy: 'doubao-seed',
+        updatedAt: '2026-07-05 10:00',
+        created_at: '2026-07-05T00:00:00',
+        updated_at: '2026-07-05T00:00:00',
+      },
+      {
+        id: 'tag-2',
+        material_id: materialId,
+        category: 'effect',
+        dimension: 'effect',
+        name: '高 CTR',
+        confidence: 0.91,
+        source: 'effect_backflow',
+        needs_review: false,
+        excludedFromRanking: false,
+        createdBy: 'effect-sync',
+        updatedAt: '2026-07-05 11:00',
+        created_at: '2026-07-05T00:00:00',
+        updated_at: '2026-07-05T00:00:00',
+      },
+      {
+        id: 'tag-3',
+        material_id: materialId,
+        category: 'compliance',
+        dimension: 'compliance',
+        name: '版权已授权',
+        confidence: 1,
+        source: 'human',
+        needs_review: false,
+        createdBy: 'legal',
+        updatedAt: '2026-07-05 12:00',
+        created_at: '2026-07-05T00:00:00',
+        updated_at: '2026-07-05T00:00:00',
+      },
+      {
+        id: 'tag-4',
+        material_id: materialId,
+        category: 'management',
+        dimension: 'management',
+        name: '品牌核心资产',
+        confidence: 1,
+        source: 'system_rule',
+        needs_review: false,
+        locked: true,
+        createdBy: 'system',
+        updatedAt: '2026-07-05 12:30',
         created_at: '2026-07-05T00:00:00',
         updated_at: '2026-07-05T00:00:00',
       },

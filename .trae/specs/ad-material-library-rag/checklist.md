@@ -27,3 +27,18 @@
 - [x] 生成或预览页面展示素材上下文、参考素材使用和结果回流素材库提示
 - [x] 现有项目创建、brief、生成、预览、画廊、历史和 admin 路由保持可达并有测试覆盖
 - [x] 前端验证 `npm run lint && npm run typecheck && npm run test && npm run build` 通过
+- [x] 素材工作台展示 raw、finished、knowledge 三类 mock/demo 素材，并展示改造前后效果指标
+- [x] 素材库浏览页采用 PC 桌面资产流布局，筛选区、资产主区和 MaterialInspector 同时可见
+- [x] 素材库浏览页展示索引与召回解释，包含向量召回、标签过滤、效果加权和 RAG 引用来源
+- [x] 资产行展示库类型、素材类型、状态、标签、效果指标、匹配原因和快捷动作
+- [x] 批量操作条提供批量加标签、批量移除标签和批量确认 AI 标签入口
+- [x] 素材详情页展示入库流水线：接收、清洗、去重、元数据、打标、向量化、索引完成、风险校验
+- [x] MaterialInspector 或详情上下文展示标签管理区域，支持新增、删除、编辑、确认 AI 标签
+- [x] 标签展示模型包含或派生 `name`、`dimension`、`source`、`confidence`、`createdBy`、`updatedAt`、`locked`
+- [x] AI 标签确认后表达为人工校准结果，AI 标签可编辑和删除
+- [x] 效果标签默认不可直接删除，只能隐藏或标记不参与排序
+- [x] 合规标签删除需要二次确认文案，并展示审计记录要求
+- [x] locked 标签在 UI 中表现为只读或禁用状态
+- [x] 前端测试覆盖素材工作台效果区、素材库召回解释、批量标注、详情流水线和标签治理
+- [x] 使用 impeccable 产品 UI 规则完成审查，并根据审查建议完成一轮 UI 迭代
+- [x] 前端验证 `npm run lint && npm run typecheck && npm run test && npm run build` 通过

@@ -132,8 +132,8 @@ export type MaterialLibraryType = 'raw' | 'finished' | 'knowledge';
 export type MaterialCopyrightStatus = 'cleared' | 'licensed' | 'unknown' | 'risk';
 export type MaterialComplianceStatus = 'approved' | 'pending' | 'risk';
 export type MaterialVisibility = 'private' | 'brand' | 'public';
-export type MaterialTagCategory = 'content' | 'business' | 'management' | 'effect';
-export type MaterialTagSource = 'ai' | 'human' | 'system';
+export type MaterialTagCategory = 'content' | 'business' | 'management' | 'effect' | 'compliance' | 'scene' | 'industry';
+export type MaterialTagSource = 'ai' | 'human' | 'system' | 'effect_backflow' | 'system_rule';
 export type MaterialIndexStatus = 'pending' | 'indexed' | 'failed';
 
 export interface MaterialAsset {
@@ -166,11 +166,17 @@ export interface MaterialTag {
   id: string;
   material_id: string;
   category: MaterialTagCategory;
+  dimension?: MaterialTagCategory;
   name: string;
   value?: string | null;
   confidence: number;
   source: MaterialTagSource;
   needs_review: boolean;
+  createdBy?: string;
+  updatedAt?: string;
+  locked?: boolean;
+  hidden?: boolean;
+  excludedFromRanking?: boolean;
   created_at: string;
   updated_at: string;
 }
