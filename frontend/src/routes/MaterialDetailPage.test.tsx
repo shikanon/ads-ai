@@ -20,6 +20,15 @@ describe('MaterialDetailPage', () => {
     renderPage();
 
     expect(screen.getByText('夏日饮料高转化片头')).toBeInTheDocument();
+    expect(screen.getByLabelText('素材预览')).toBeInTheDocument();
+    expect(screen.getByText('召回证据')).toBeInTheDocument();
+    expect(screen.getByText('素材档案')).toBeInTheDocument();
+    expect(screen.getByText('可复用建议')).toBeInTheDocument();
+    expect(screen.getByText('AI 标签质量')).toBeInTheDocument();
+    expect(screen.getByText('投放信号')).toBeInTheDocument();
+    expect(screen.getByText('技术质量')).toBeInTheDocument();
+    expect(screen.getByText('3 秒内展示冰饮与利益点。')).toBeInTheDocument();
+    expect(screen.getByText('title: 夏日饮料高转化片头')).toBeInTheDocument();
     expect(screen.getAllByText('场景: 冰饮').length).toBeGreaterThan(0);
     expect(screen.getByText('indexed')).toBeInTheDocument();
     expect(screen.getByText('ctr')).toBeInTheDocument();
@@ -39,6 +48,9 @@ describe('MaterialDetailPage', () => {
     expect(screen.getByText('向量化')).toBeInTheDocument();
     expect(screen.getByText('索引完成')).toBeInTheDocument();
     expect(screen.getByText('风险校验')).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/流水线阶段/).length).toBe(8);
+    expect(screen.getByText('当前阶段：索引完成')).toBeInTheDocument();
+    expect(screen.getByText('素材已进入可检索池，等待风险复核完成后进入默认召回。')).toBeInTheDocument();
     expect(screen.getByLabelText('标签管理操作')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: '确认 AI 标签' }).length).toBeGreaterThan(0);
     expect(screen.getByText('效果标签不可直接删除，只能隐藏或标记不参与排序')).toBeInTheDocument();
@@ -60,9 +72,10 @@ function detailResult() {
       visibility: 'brand',
       title: '夏日饮料高转化片头',
       description: '3 秒内展示冰饮与利益点。',
-      source_metadata: { channel: 'campaign' },
-      technical_metadata: { duration_seconds: 9 },
-      effect_metrics: { ctr: 0.12 },
+      source_uri: '/mock-assets/drama-hook.mp4',
+      source_metadata: { channel: 'campaign', ratio: '9:16', duration: '9s', thumbnail_url: '/mock-assets/drama-hook-cover.jpg' },
+      technical_metadata: { duration_seconds: 9, width: 720, height: 1280, frame_rate: 24 },
+      effect_metrics: { ctr: 0.12, cvr: 0.023, reuse_count: 8, impressions: 120000 },
       created_at: '2026-07-05T00:00:00',
       updated_at: '2026-07-05T00:00:00',
     },

@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     app_port: int = 9898
     cors_origins: list[str] = [
         "http://localhost:8989",
+        "http://127.0.0.1:8989",
         "https://lens-rhyme.tensorbytes.com",
         "https://admin.lens-rhyme.tensorbytes.com",
     ]

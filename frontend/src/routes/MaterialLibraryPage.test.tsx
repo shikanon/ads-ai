@@ -19,7 +19,7 @@ describe('MaterialLibraryPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('展示素材列表空态并提供上传与检索入口', async () => {
+  it('真实素材库为空时展示示例素材并说明原因', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ results: [] }),
@@ -28,17 +28,38 @@ describe('MaterialLibraryPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText('暂无匹配资产')).toBeInTheDocument();
-    expect(screen.getByText('调整筛选，或先看素材入库链路')).toBeInTheDocument();
+    expect(await screen.findByText('展示 mock 示例素材')).toBeInTheDocument();
+    expect(screen.getByText('真实素材库暂无匹配资产')).toBeInTheDocument();
+    expect(screen.getByText('8 条可见资产')).toBeInTheDocument();
+    expect(screen.getAllByText('乡村湖边道路突发近景素材').length).toBeGreaterThan(0);
+    expect(screen.getByText('5.1s')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '上传素材' })[0]).toHaveAttribute('href', '/materials/upload');
-    expect(screen.getByRole('link', { name: '去检索' })).toHaveAttribute('href', '/materials/search');
+    expect(screen.getAllByRole('link', { name: '查看详情' }).length).toBeGreaterThanOrEqual(8);
+    expect(screen.queryByText('暂无匹配资产')).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:9898/api/materials/search',
       expect.objectContaining({ method: 'POST' }),
     );
   });
 
-  it('展示 PC 资产流、召回解释、Inspector 和批量操作条', async () => {
+  it('接口不可用时展示 mock 示例素材而不是故障空态', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderPage();
+
+    expect(await screen.findByText('展示 mock 示例素材')).toBeInTheDocument();
+    expect(screen.getByText('8 条可见资产')).toBeInTheDocument();
+    expect(screen.getAllByText('乡村湖边道路突发近景素材').length).toBeGreaterThan(0);
+    expect(screen.getByText('山村湖边')).toBeInTheDocument();
+    expect(screen.getAllByText('防晒喷雾户外实测原始片段').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('短剧前贴 3 秒强钩子脚本结构').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(/素材预览/).length).toBeGreaterThanOrEqual(8);
+    expect(screen.getAllByRole('link', { name: '查看详情' }).length).toBeGreaterThanOrEqual(8);
+    expect(screen.queryByText('暂无匹配资产')).not.toBeInTheDocument();
+  });
+
+  it('展示紧凑素材卡片网格，详情通过点击进入', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ results: materialResults() }),
@@ -53,23 +74,23 @@ describe('MaterialLibraryPage', () => {
     expect(screen.getByText('标签过滤')).toBeInTheDocument();
     expect(screen.getByText('效果加权')).toBeInTheDocument();
     expect(screen.getByText('RAG 引用来源')).toBeInTheDocument();
-    expect(await screen.findByLabelText('PC 资产流')).toBeInTheDocument();
+    expect(await screen.findByLabelText('素材卡片网格')).toBeInTheDocument();
     expect(screen.getAllByText('家庭伦理短剧前贴').length).toBeGreaterThan(0);
-    expect(screen.getByText('品牌产品图原始素材')).toBeInTheDocument();
-    expect(screen.getByText('强钩子脚本经验模板')).toBeInTheDocument();
+    expect(screen.getAllByText('品牌产品图原始素材').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('强钩子脚本经验模板').length).toBeGreaterThan(0);
     expect(screen.getAllByText('成品素材 · 视频').length).toBeGreaterThan(0);
     expect(screen.getByText('原始素材 · 图片')).toBeInTheDocument();
     expect(screen.getByText('经验知识 · 文本')).toBeInTheDocument();
     expect(screen.getAllByText('可检索').length).toBeGreaterThan(0);
     expect(screen.getAllByText('已打标').length).toBeGreaterThan(0);
     expect(screen.getByText('3 条可见资产')).toBeInTheDocument();
-    expect(screen.getByText('MaterialInspector')).toBeInTheDocument();
-    expect(screen.getByText('确认 AI 标签')).toBeInTheDocument();
+    expect(screen.queryByText('MaterialInspector')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: '查看详情' })[0]).toHaveAttribute('href', '/materials/finished-001');
 
     await userEvent.click(screen.getByRole('button', { name: '展开召回解释' }));
     expect(screen.getByRole('button', { name: '折叠召回解释' })).toHaveAttribute('aria-expanded', 'true');
 
-    await userEvent.click(screen.getByLabelText('选择 家庭伦理短剧前贴'));
+    await userEvent.click(screen.getByLabelText('添加 家庭伦理短剧前贴'));
 
     expect(screen.getByLabelText('桌面固定批量操作条')).toBeInTheDocument();
     expect(screen.getByText('批量加标签')).toBeInTheDocument();

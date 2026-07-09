@@ -48,6 +48,7 @@ def test_settings_default_cors_origins_include_remote_domains():
     settings = Settings(_env_file=None)
 
     assert "http://localhost:8989" in settings.cors_origins
+    assert "http://127.0.0.1:8989" in settings.cors_origins
     assert "https://lens-rhyme.tensorbytes.com" in settings.cors_origins
     assert "https://admin.lens-rhyme.tensorbytes.com" in settings.cors_origins
 
