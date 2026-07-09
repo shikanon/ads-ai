@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { MaterialAsset, MaterialAuditEvent, MaterialSearchResponse, MaterialSearchResult, MaterialTag, MaterialVectorIndex } from '../types';
@@ -291,9 +292,33 @@ function IngestionPipeline() {
 
 function TagGovernance({ tags }: { tags: MaterialTag[] }) {
   const visibleTags = tags.length > 0 ? tags : [];
+  const aiTags = visibleTags.filter((tag) => tag.source === 'ai');
+  const lockedTags = visibleTags.filter((tag) => tag.locked);
+  const restrictedTags = visibleTags.filter((tag) => {
+    const dimension = tag.dimension ?? tag.category;
+    return dimension === 'effect' || dimension === 'compliance' || Boolean(tag.locked);
+  });
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap gap-2" aria-label="标签管理操作">
+      <div className="rounded-xl border bg-muted/30 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Governance Queue</span>
+            <strong className="mt-1 block text-base">标签治理队列</strong>
+          </div>
+          <Badge variant={aiTags.length > 0 ? 'default' : 'secondary'}>
+            {aiTags.length > 0 ? `${aiTags.length} 个 AI 标签待确认` : '无待确认 AI 标签'}
+          </Badge>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <GovernanceStat label="可治理标签" value={`${visibleTags.length} 个`} />
+          <GovernanceStat label="限制操作" value={`${restrictedTags.length} 个`} />
+          <GovernanceStat label="只读标签" value={`${lockedTags.length} 个`} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2" aria-label="标签管理操作">
         <Button type="button" size="sm" variant="secondary">新增标签</Button>
         <Button type="button" size="sm" variant="secondary">编辑标签</Button>
         <Button type="button" size="sm" variant="destructive">删除标签</Button>
@@ -309,20 +334,45 @@ function TagGovernance({ tags }: { tags: MaterialTag[] }) {
             const isCompliance = dimension === 'compliance';
             const isAi = tag.source === 'ai';
             const isLocked = Boolean(tag.locked);
+            const confidence = Math.round(tag.confidence * 100);
             return (
-              <article className="grid gap-4 rounded-xl border bg-background p-4 lg:grid-cols-[minmax(0,1fr)_auto]" key={tag.id}>
-                <div className="flex flex-col gap-2">
-                  <strong>{tag.name}{tag.value ? `: ${tag.value}` : ''}</strong>
-                  <span className="text-sm text-muted-foreground">{dimension} · {sourceLabel(tag.source)} · 置信度 {Math.round(tag.confidence * 100)}%</span>
-                  <span className="text-sm text-muted-foreground">创建人 {tag.createdBy ?? 'system'} · 更新 {tag.updatedAt ?? tag.updated_at}</span>
-                </div>
-                <div className="flex flex-wrap items-start gap-2 lg:justify-end">
-                  <Button type="button" size="sm" disabled={!isAi || isLocked}>{isAi ? '确认 AI 标签' : '已人工校准'}</Button>
-                  <Button type="button" size="sm" variant="secondary" disabled={isLocked}>编辑</Button>
-                  <Button type="button" size="sm" variant="destructive" disabled={isEffect || isLocked}>{isCompliance ? '需二次确认后删除' : '删除'}</Button>
-                  {isEffect && <Badge variant="outline">效果标签不可直接删除，只能隐藏或标记不参与排序</Badge>}
-                  {isCompliance && <Badge variant="outline">合规标签删除需二次确认文案，并写入审计记录</Badge>}
-                  {isLocked && <Badge variant="outline">locked 标签只读</Badge>}
+              <article className="rounded-xl border bg-background p-4" key={tag.id}>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <strong className="text-base">{tag.name}{tag.value ? `: ${tag.value}` : ''}</strong>
+                        <Badge variant={isAi ? 'default' : 'secondary'}>{sourceLabel(tag.source)}</Badge>
+                        <Badge variant="outline">{dimensionLabel(dimension)}</Badge>
+                      </div>
+                      <span className="mt-2 block text-sm text-muted-foreground">创建人 {tag.createdBy ?? 'system'} · 更新 {tag.updatedAt ?? tag.updated_at}</span>
+                    </div>
+                    <Badge variant={confidence < 80 ? 'destructive' : 'outline'}>置信度 {confidence}%</Badge>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Progress value={confidence} aria-label={`${tag.name} 置信度`} />
+                    <div className="flex flex-wrap gap-2">
+                      {isAi && <Badge variant="secondary">建议人工确认后参与排序</Badge>}
+                      {isEffect && <Badge variant="outline">效果回流标签</Badge>}
+                      {isCompliance && <Badge variant="outline">合规治理标签</Badge>}
+                      {isLocked && <Badge variant="outline">系统锁定</Badge>}
+                    </div>
+                  </div>
+
+                  {(isEffect || isCompliance || isLocked) && (
+                    <div className="rounded-lg border bg-muted/25 p-3 text-sm leading-6 text-muted-foreground">
+                      {isEffect && <p>效果标签不可直接删除，只能隐藏或标记不参与排序</p>}
+                      {isCompliance && <p>合规标签删除需二次确认文案，并写入审计记录</p>}
+                      {isLocked && <p>locked 标签只读</p>}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" size="sm" disabled={!isAi || isLocked}>{isAi ? '确认 AI 标签' : '已人工校准'}</Button>
+                    <Button type="button" size="sm" variant="secondary" disabled={isLocked}>编辑</Button>
+                    <Button type="button" size="sm" variant="destructive" disabled={isEffect || isLocked}>{isCompliance ? '需二次确认后删除' : '删除'}</Button>
+                  </div>
                 </div>
               </article>
             );
@@ -330,14 +380,38 @@ function TagGovernance({ tags }: { tags: MaterialTag[] }) {
         </div>
       )}
       <Separator />
-      <div className="grid gap-2 text-sm leading-6 text-muted-foreground">
-        <p>AI 标签确认后会作为人工校准结果参与检索排序。</p>
-        <p>效果标签默认不可直接删除，只允许隐藏或标记不参与排序。</p>
-        <p>合规标签删除需要二次确认文案，并展示审计记录要求。</p>
-        <p>locked 标签表现为只读或禁用状态。</p>
+      <div className="rounded-xl border bg-muted/20 p-3">
+        <strong className="text-sm">治理规则</strong>
+        <div className="mt-2 grid gap-2 text-sm leading-6 text-muted-foreground">
+          <p>AI 标签确认后会作为人工校准结果参与检索排序。</p>
+          <p>效果标签默认不可直接删除，只允许隐藏或标记不参与排序。</p>
+          <p>合规标签删除需要二次确认文案，并展示审计记录要求。</p>
+          <p>locked 标签表现为只读或禁用状态。</p>
+        </div>
       </div>
     </div>
   );
+}
+
+function GovernanceStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border bg-background px-3 py-2">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <strong className="mt-1 block text-sm">{value}</strong>
+    </div>
+  );
+}
+
+function dimensionLabel(dimension: string): string {
+  const labels: Record<string, string> = {
+    business: '业务标签',
+    compliance: '合规标签',
+    content: '内容标签',
+    effect: '效果标签',
+    management: '管理标签',
+    scene: '场景标签',
+  };
+  return labels[dimension] ?? dimension;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
